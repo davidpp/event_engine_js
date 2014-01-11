@@ -203,7 +203,7 @@ ExpEval.prototype.evaluate = function ()
 						var result = this.__operateOn(operand1, operand2, top_operator);
 						operandList.push(result);
 					}							
-				} while (top_operator != exp_eval_options.SEGMENT_START_CHAR)
+				} while (top_operator != exp_eval_options.SEGMENT_START_CHAR && operatorList.length > 0)
 				break;
 
 			case exp_eval_options.SEGMENT_START:
