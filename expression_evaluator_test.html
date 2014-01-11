@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="expression_evaluator.js"></script>
+	<script>
+
+		function myFunction()
+		{
+			var expression = document.getElementById("expression").value;
+			var exp_eval = new ExpEval(expression, {
+				onNeedValue : function(valueName)
+				{
+					switch(valueName)
+					{
+						case "a" : return 1;
+						case "b" : return 2;
+						case "c" : return 3;
+					}
+				}
+			});
+
+			var result = exp_eval.evaluate();
+			
+			document.getElementById("resultView").innerHTML = result;
+		}
+
+	</script>
+</head>
+<body>
+	<input type="text" id="expression"></input>
+	<button onclick="myFunction()">Try it</button>
+	<div id="resultView"></div>
+</body>
+</html>
