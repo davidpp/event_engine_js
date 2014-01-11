@@ -15,6 +15,7 @@ function Event(code, trigger_tracker) {
 		this.__raise_delay = 0;
 		this.__reset_delay = 0;
 		this.__must_reset = true;
+		this.__raise_interval = 0;
 }
 
 Event.prototype.setOptions = function(options)
@@ -23,6 +24,7 @@ Event.prototype.setOptions = function(options)
 	this.__reset_delay = options.reset_delay;
 
 	this.__must_reset = options.must_reset;
+	this.__raise_interval = options.raise_interval;
 
 	this.__trigger_tracker.removeListener(this.__raise_trigger, this);
 	this.__raise_trigger = options.raise_trigger;
@@ -65,11 +67,12 @@ Event.prototype.onTriggerReleased = function(code)
 
 Event.prototype.tick = function(time)
 {
-	if ( this.__can_raise && ( ! this.__must_reset || ! this.__raised ) )
+	// First Raise
+	if ( this.__can_raise && ! this.__raised )
 	{
 		this.__raise_counter ++;
 
-		if ( this.__raise_counter >= this.__raise_delay ) 
+		if ( this.__raise_counter >= this.__raise_delay )
 		{
 			this.__raised = true;
 			this.__reset_counter = 0;
@@ -79,6 +82,17 @@ Event.prototype.tick = function(time)
 		}
 	}
 
+	// Repeating raises if not must_reset
+	if ( this.__raised && ! this.__must_reset )
+	{
+		this.__raise_counter ++;
+
+		if ( this.__raise_counter % this.__raise_interval == 0 )
+			for(var key in this.__listeners)
+				this.__listeners[key].onRaised(this.__code);
+	}
+
+	// Reset
 	if ( this.__can_reset && this.__raised )
 	{
 		this.__reset_counter ++;

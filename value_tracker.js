@@ -1,4 +1,5 @@
 function Value(code) {
+	
 	this.__code = code;
 	this.__value = null;
 	this.__listeners = new Array();

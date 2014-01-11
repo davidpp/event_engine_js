@@ -12,12 +12,7 @@
 			var exp_eval = new ExpEval(expression, {
 				onNeedValue : function(valueName)
 				{
-					switch(valueName)
-					{
-						case "a" : return 1;
-						case "b" : return 2;
-						case "c" : return 3;
-					}
+					return document.getElementById(valueName).value;
 				}
 			});
 
@@ -26,11 +21,36 @@
 			document.getElementById("resultView").innerHTML = result;
 		}
 
+		var input_id = 1;
+
+		function addInput()
+		{
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input.setAttribute("id", "i" + input_id);
+
+			var label = document.createElement("label");
+			input.setAttribute("for", "i" + input_id);
+			label.innerHTML = "i" + input_id;
+
+			document.getElementById("inputView").appendChild(label);
+			document.getElementById("inputView").appendChild(input);
+			document.getElementById("inputView").appendChild(document.createElement("br"));
+
+			input_id++;
+		}
+
 	</script>
 </head>
 <body>
 	<input type="text" id="expression"></input>
-	<button onclick="myFunction()">Try it</button>
 	<div id="resultView"></div>
+
+	<button onclick="addInput()">Add Input</button><br>
+	<div id="inputView">
+	</div>
+
+	<button onclick="myFunction()">Try it</button><br>
+	
 </body>
 </html>
