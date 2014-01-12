@@ -6,51 +6,81 @@
 	<script src="expression_evaluator.js"></script>
 	<script>
 
-		function myFunction()
-		{
-			var expression = document.getElementById("expression").value;
-			var exp_eval = new ExpEval(expression, {
-				onNeedValue : function(valueName)
-				{
-					return document.getElementById(valueName).value;
-				}
-			});
+		var exp_eval = null;
+		var data_source = {
+			onNeedValue : function(valueName)
+			{
+				return document.getElementById(valueName).value;
+			}
+		};
 
-			var result = exp_eval.evaluate();
-			
-			document.getElementById("resultView").innerHTML = result;
+		function init()
+		{
+			clearInputs();
+
+			var expression = document.getElementById("expression").value;
+			exp_eval = new ExpEval(expression, data_source);
+
+			var var_list = exp_eval.getVariableList();
+			for(key in var_list)
+				addInput(var_list[key]);
+
+			if (var_list.length == 0)
+				evaluateExp();
+			else
+				showInputs();
 		}
 
-		var input_id = 1;
+		function evaluateExp()
+		{
+			if (exp_eval == null)
+				return;
+			
+			var result = exp_eval.evaluate();
+			showResult(result);
+		}
 
-		function addInput()
+		function addInput(id)
 		{
 			var input = document.createElement("input");
 			input.setAttribute("type", "text");
-			input.setAttribute("id", "i" + input_id);
+			input.setAttribute("id", id);
 
 			var label = document.createElement("label");
-			input.setAttribute("for", "i" + input_id);
-			label.innerHTML = "i" + input_id;
+			input.setAttribute("for", id);
+			label.innerHTML = id;
 
-			document.getElementById("inputView").appendChild(label);
-			document.getElementById("inputView").appendChild(input);
-			document.getElementById("inputView").appendChild(document.createElement("br"));
+			document.getElementById("inputList").appendChild(label);
+			document.getElementById("inputList").appendChild(input);
+			document.getElementById("inputList").appendChild(document.createElement("br"));
+		}
 
-			input_id++;
+		function clearInputs()
+		{
+			document.getElementById("inputList").innerHTML = "";
+			document.getElementById("inputView").style.visibility="hidden";
+		}
+
+		function showInputs()
+		{
+			document.getElementById("inputView").style.visibility="visible";
+		}
+
+		function showResult(result)
+		{
+			document.getElementById("resultView").innerHTML = result;
 		}
 
 	</script>
 </head>
 <body>
-	<input type="text" id="expression"></input>
-	<div id="resultView"></div>
+	<input type="text" id="expression">=<span id="resultView"></span><br>
+	<button onclick="init()">Evaluate</button><br>
 
-	<button onclick="addInput()">Add Input</button><br>
-	<div id="inputView">
+	<div id="inputView" style="visibility:hidden">
+		<div id="inputList"></div>
+		<button onclick="evaluateExp()">Submit Variables</button><br>
 	</div>
-
-	<button onclick="myFunction()">Try it</button><br>
 	
 </body>
 </html>
