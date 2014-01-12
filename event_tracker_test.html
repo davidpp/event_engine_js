@@ -96,7 +96,9 @@
 			reset_delay : 10, // 10 ticks
 
 			must_reset : false,
-			raise_interval : 5 // 5 ticks
+			raise_interval : 5, // 5 ticks
+
+			repeat_interval : 5 // 5 ticks
 		});
 
 		event_tracker.addEvent("SPEEDING", {
@@ -106,8 +108,7 @@
 			reset_trigger : "SPEED_BELOW_LEGAL_LIMIT",
 			reset_delay : 10, // 10 ticks
 
-			must_reset : false,
-			raise_interval : 5 // 5 ticks
+			repeat_interval : 0
 		});
 
 		event_tracker.addListener("DRIVE", event_listener);
@@ -127,10 +128,16 @@
 			value_tracker.newValue("speed", speed);
 		}
 
+		function clearMessages()
+		{
+			document.getElementById("messageView").innerHTML = "";
+		}
+
 	</script>
 </head>
 <body>
 	<input type="text" id="speed" />
 	<button onClick="setSpeed()">Set Speed</button>
+	<button onClick="clearMessages()">Clear Messages</button>
 	<div id="messageView"></div>
 </body>
