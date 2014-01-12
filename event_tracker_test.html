@@ -56,6 +56,11 @@
 					value_tracker.newValue("speedcount", values["speedcount"] + 1);
 			},
 
+			onRepeated : function(code)
+			{
+				writeMessage("EVENT REPEATED " + code + "<br>");
+			},
+
 			onReseted : function(code)
 			{
 				writeMessage("EVENT RESETED " + code + "<br>");
@@ -101,7 +106,8 @@
 			reset_trigger : "SPEED_BELOW_LEGAL_LIMIT",
 			reset_delay : 10, // 10 ticks
 
-			must_reset : true
+			must_reset : false,
+			raise_interval : 5 // 5 ticks
 		});
 
 		event_tracker.addListener("DRIVE", event_listener);

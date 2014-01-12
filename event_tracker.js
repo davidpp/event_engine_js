@@ -89,7 +89,7 @@ Event.prototype.tick = function(time)
 
 		if ( this.__raise_counter % this.__raise_interval == 0 )
 			for(var key in this.__listeners)
-				this.__listeners[key].onRaised(this.__code);
+				this.__listeners[key].onRepeated(this.__code);
 	}
 
 	// Reset
