@@ -35,7 +35,7 @@
 		{
 			if (exp_eval == null)
 				return;
-			
+
 			var result = exp_eval.evaluate();
 			showResult(result);
 		}
@@ -48,7 +48,7 @@
 
 			var label = document.createElement("label");
 			input.setAttribute("for", id);
-			label.innerHTML = id;
+			label.innerHTML = id + ": ";
 
 			document.getElementById("inputList").appendChild(label);
 			document.getElementById("inputList").appendChild(input);
@@ -74,11 +74,28 @@
 	</script>
 </head>
 <body>
-	<input type="text" id="expression">=<span id="resultView"></span><br>
+	<div>
+		<ul>
+			<li>Supported operations are: || && == != <= < >= > + - * / % ^
+			<li>The use of paranthesis are also supported
+			<li>Variable names start with an under-score (e.g _thisIsAVariable)
+			<li>Everything else is considered a constant
+			<li>White spaces should be fine but they are not tested
+		</ul>
+	</div>
+	
+	<br>
+
+	<label for="expression">Expression: </label>
+	<input type="text" id="expression"> = <span id="resultView">Result</span><br>
 	<button onclick="init()">Evaluate</button><br>
 
 	<div id="inputView" style="visibility:hidden">
+		<br>
+		Variables:
+		<br>
 		<div id="inputList"></div>
+		<br>
 		<button onclick="evaluateExp()">Submit Variables</button><br>
 	</div>
 	

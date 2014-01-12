@@ -198,7 +198,7 @@ ExpEval.prototype.__fillSymbolList = function(expression)
 	var symbol_list = expression.split(new RegExp(this.options.SYMBOL_PATTERN));
 	for (var key in symbol_list)
 	{
-		var symbol = symbol_list[key];
+		var symbol = symbol_list[key].trim();
 		if (this.__getSymbolType(symbol) != exp_eval_constants.INVALID_SYMBOL)
 			this.__symbol_list.push(symbol);
 	}
