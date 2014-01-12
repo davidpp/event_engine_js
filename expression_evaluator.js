@@ -6,8 +6,6 @@ var exp_eval_constants = {
 	SEGMENT_END : "segment_end",
 	VARIABLE : "variable",
 	CONSTANT : "constant",
-	BINARY : "binary",
-	UNARY : "unary",
 }
 
 function ExpEvalOptions() {
@@ -30,7 +28,6 @@ function ExpEvalOptions() {
 		"||" : {
 			precedence : 1,
 			regex_symbol : '\\|\\|',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 || o2 ? true : false;
 			}
@@ -39,7 +36,6 @@ function ExpEvalOptions() {
 		"&&" : {
 			precedence : 2,
 			regex_symbol : '&&',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 && o2 ? true : false;
 			}
@@ -48,7 +44,6 @@ function ExpEvalOptions() {
 		"==" : {
 			precedence : 3,
 			regex_symbol : '==',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 == o2 ? true : false;
 			}
@@ -57,7 +52,6 @@ function ExpEvalOptions() {
 		"!=" : {
 			precedence : 3,
 			regex_symbol : '!=',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 != o2 ? true : false;
 			}
@@ -66,7 +60,6 @@ function ExpEvalOptions() {
 		"<=" : {
 			precedence : 4,
 			regex_symbol : '<=',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 <= o2 ? true : false;
 			}
@@ -75,7 +68,6 @@ function ExpEvalOptions() {
 		"<" : {
 			precedence : 4,
 			regex_symbol : '<',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 < o2 ? true : false;
 			}
@@ -84,7 +76,6 @@ function ExpEvalOptions() {
 		">=" : {
 			precedence : 4,
 			regex_symbol : '>=',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 >= o2 ? true : false;
 			}
@@ -93,61 +84,54 @@ function ExpEvalOptions() {
 		">" : {
 			precedence : 4,
 			regex_symbol : '>',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return o1 > o2 ? true : false;
 			}
 		},
 
-		"+"  : {
+		"+" : {
 			precedence : 5,
 			regex_symbol : '\\+',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return parseFloat(o1) + parseFloat(o2);
 			}
 		},
 
-		"-"  : {
+		"-" : {
 			precedence : 5,
 			regex_symbol : '-',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return parseFloat(o1) - parseFloat(o2);
 			}
 		},
 
-		"*"  : {
+		"*" : {
 			precedence : 6,
 			regex_symbol : '\\*',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return parseFloat(o1) * parseFloat(o2);
 			}
 		},
 
-		"/"  : {
+		"/" : {
 			precedence : 6,
 			regex_symbol : '/',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return parseFloat(o1) / parseFloat(o2);
 			}
 		},
 
-		"%"  : {
+		"%" : {
 			precedence : 6,
 			regex_symbol : '%',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return parseFloat(o1) % parseFloat(o2);
 			}
 		},
 
-		"^"  : {
+		"^" : {
 			precedence : 7,
 			regex_symbol : '\\^',
-			type : exp_eval_constants.BINARY,
 			perform : function(o1,o2) {
 				return Math.pow(parseFloat(o1) , parseFloat(o2));
 			}
@@ -181,9 +165,9 @@ var default_exp_eval_options = new ExpEvalOptions();
 function ExpEval(expression, data_source, exp_eval_options) {
 
 	if (exp_eval_options == null)
-		this.options = default_exp_eval_options;
+		this.__options = default_exp_eval_options;
 	else
-		this.options = exp_eval_options;
+		this.__options = exp_eval_options;
 
 	this.__data_source = data_source;
 	this.__symbol_list = new Array();
@@ -195,7 +179,7 @@ function ExpEval(expression, data_source, exp_eval_options) {
 
 ExpEval.prototype.__fillSymbolList = function(expression)
 {
-	var symbol_list = expression.split(new RegExp(this.options.SYMBOL_PATTERN));
+	var symbol_list = expression.split(new RegExp(this.__options.SYMBOL_PATTERN));
 	for (var key in symbol_list)
 	{
 		var symbol = symbol_list[key].trim();
@@ -209,13 +193,13 @@ ExpEval.prototype.__getSymbolType = function(symbol)
 	if (symbol.length == 0)
 		return exp_eval_constants.INVALID_SYMBOL;
 
-	if ( null != this.options.OPERATORS[symbol] )
+	if ( null != this.__options.OPERATORS[symbol] )
 		return exp_eval_constants.OPERATOR;
 
-	if (symbol == this.options.SEGMENT_START_CHAR)
+	if (symbol == this.__options.SEGMENT_START_CHAR)
 		return exp_eval_constants.SEGMENT_START;
 
-	if (symbol == this.options.SEGMENT_END_CHAR)
+	if (symbol == this.__options.SEGMENT_END_CHAR)
 		return exp_eval_constants.SEGMENT_END;
 
 	return exp_eval_constants.OPERAND;
@@ -226,7 +210,7 @@ ExpEval.prototype.__getOperandType = function(operand)
 	if (typeof operand !== 'string')
 		return exp_eval_constants.CONSTANT;
 
-	if (operand.search(this.options.VARIABLE_PREFIX) == 0)
+	if (operand.search(this.__options.VARIABLE_PREFIX) == 0)
 		return exp_eval_constants.VARIABLE;
 
 	return exp_eval_constants.CONSTANT;
@@ -234,7 +218,7 @@ ExpEval.prototype.__getOperandType = function(operand)
 
 ExpEval.prototype.__getVariableName = function(operand)
 {
-	return operand.slice(this.options.VARIABLE_PREFIX.length);
+	return operand.slice(this.__options.VARIABLE_PREFIX.length);
 }
 
 ExpEval.prototype.__fillVariableList = function()
@@ -255,7 +239,7 @@ ExpEval.prototype.__fillVariableList = function()
 
 ExpEval.prototype.__getOperatorPresendence = function(operator)
 {
-	return this.options.OPERATORS[operator].precedence;
+	return this.__options.OPERATORS[operator].precedence;
 }
 
 ExpEval.prototype.__getVariableValue = function(operand)
@@ -277,7 +261,7 @@ ExpEval.prototype.__operateOn = function (operand1, operand2, operator)
 {
 	var o1 = this.__getVariableValue(operand1);
 	var o2 = this.__getVariableValue(operand2);
-	var op = this.options.OPERATORS[operator];
+	var op = this.__options.OPERATORS[operator];
 
 	return op.perform(o1, o2);
 }
@@ -300,7 +284,7 @@ ExpEval.prototype.evaluate = function ()
 				{
 					var top_operator = operatorList[operatorList.length-1];
 
-					if (top_operator != this.options.SEGMENT_START_CHAR)
+					if (top_operator != this.__options.SEGMENT_START_CHAR)
 						if ( this.__getOperatorPresendence(symbol) < this.__getOperatorPresendence(top_operator) )
 						{
 							operatorList.pop();
@@ -321,7 +305,7 @@ ExpEval.prototype.evaluate = function ()
 				{
 					top_operator = operatorList.pop();
 
-					if (top_operator != this.options.SEGMENT_START_CHAR)
+					if (top_operator != this.__options.SEGMENT_START_CHAR)
 					{
 						var operand2 = operandList.pop();
 						var operand1 = operandList.pop();
@@ -329,7 +313,7 @@ ExpEval.prototype.evaluate = function ()
 						var result = this.__operateOn(operand1, operand2, top_operator);
 						operandList.push(result);
 					}							
-				} while (top_operator != this.options.SEGMENT_START_CHAR && operatorList.length > 0)
+				} while (top_operator != this.__options.SEGMENT_START_CHAR && operatorList.length > 0)
 				break;
 
 			case exp_eval_constants.SEGMENT_START:
