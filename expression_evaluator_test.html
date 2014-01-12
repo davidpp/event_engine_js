@@ -19,6 +19,7 @@
 			clearInputs();
 
 			var expression = document.getElementById("expression").value;
+
 			exp_eval = new ExpEval(expression, data_source);
 
 			var var_list = exp_eval.getVariableList();
@@ -40,6 +41,7 @@
 				return;
 
 			var result = exp_eval.evaluate();
+
 			showResult(result);
 		}
 
@@ -79,6 +81,32 @@
 			document.getElementById("expression").value = expression;
 		}
 
+		function benchmark() {
+
+			var expression = document.getElementById("expression").value;
+
+			var test_eval;
+
+			var test1_start = new Date();
+			for(var i = 0 ; i < 10000 ; i++)
+			{
+				test_eval = new ExpEval(expression, data_source);
+				test_eval.evaluate();
+			}
+			var test1_end = new Date();
+
+			var test2_start = new Date();
+			test_eval = new ExpEval(expression, data_source);
+			for(var i = 0 ; i < 10000 ; i++)
+				test_eval.evaluate();
+			var test2_end = new Date();
+
+			var test1 = test1_end.getTime() - test1_start.getTime();
+			var test2 = test2_end.getTime() - test2_start.getTime();
+			
+			document.getElementById("bench_result").innerHTML = "Full Test: " + test1 + "<br>" + "Eval Only: " + test2;
+		}
+
 	</script>
 </head>
 <body>
@@ -116,6 +144,14 @@
 		<div id="inputList"></div>
 		<br>
 		<button onclick="evaluateExp()">Submit Variables</button><br>
+	</div>
+
+	<br>
+	
+	<div>
+		Benchmark :
+		<div id="bench_result"></div><br>
+		<button onclick="benchmark()">Run</button><br>
 	</div>
 	
 </body>
