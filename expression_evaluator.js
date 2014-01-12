@@ -20,8 +20,8 @@ function ExpEvalOptions() {
 
 	this.VARIABLE_PREFIX = "_";
 	this.VARIABLE_REGEX = "_\\w+";
-
-	this.CONSTANT_REGEX = "-?\\d+";
+	
+	this.CONSTANT_REGEX = "-?\\d+\\.\\d+|-?\d+|\\w+";
 
 	this.OPERATORS = {
 
@@ -145,6 +145,9 @@ ExpEvalOptions.prototype.__buildSymbolPattern = function()
 {
 	this.SYMBOL_PATTERN = "(";
 
+	this.SYMBOL_PATTERN += this.VARIABLE_REGEX + "|";
+	this.SYMBOL_PATTERN += this.CONSTANT_REGEX + "|";
+
 	for(var key in this.OPERATORS)
 	{
 		var operator = this.OPERATORS[key];
@@ -153,9 +156,7 @@ ExpEvalOptions.prototype.__buildSymbolPattern = function()
 	}
 
 	this.SYMBOL_PATTERN += this.SEGMENT_START_CHAR_REGEX + "|";
-	this.SYMBOL_PATTERN += this.SEGMENT_END_CHAR_REGEX + "|";
-	this.SYMBOL_PATTERN += this.VARIABLE_REGEX + "|";
-	this.SYMBOL_PATTERN += this.CONSTANT_REGEX;
+	this.SYMBOL_PATTERN += this.SEGMENT_END_CHAR_REGEX;
 
 	this.SYMBOL_PATTERN += ")";
 }
