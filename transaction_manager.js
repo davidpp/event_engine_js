@@ -66,8 +66,8 @@ Transaction.prototype.__createRecord = function()
 
 Transaction.prototype.initiate = function()
 {
-	if (null != this.__options.capture.user)
-		input_provider.onInputRequired(this, this.__options.capture.user);
+	if (null != this.__input_provider && null != this.__options.capture.user)
+		this.__input_provider.onInputRequired(this, this.__options.capture.user);
 	else
 		this.__finalize();
 }

@@ -118,17 +118,49 @@
 		}
 	});	
 
+	transaction_manager.addTransaction("DRIVE", {
+
+		listen_to : {
+			event : "DRIVE",
+			stage : "REPEAT"
+		},
+
+		capture : {
+			system : ["speed", "odometer" ],
+		}
+	});		
+
+	function displayTransaction(code, record)
+	{
+		var outputWindow = document.getElementById("outputWindow");
+
+		outputWindow.innerHTML += "<h5>" + code + "</h5>";
+
+		for (var key in record)
+		{
+			outputWindow.innerHTML += "<b>" + key + "</b> : " + record[key] + "<br>";
+		}
+
+		outputWindow.innerHTML += "<hr>";
+	}
+
 	transaction_manager.addListener("DRIVE_START", {
 		onTransactRecord : function(code, record) {
-			alert(code);
+			displayTransaction(code, record);
 		}
-	} )
+	} );
 
 	transaction_manager.addListener("DRIVE_STOP", {
 		onTransactRecord : function(code, record) {
-			alert(code);
+			displayTransaction(code, record);
 		}
-	} )	
+	} );
+
+	transaction_manager.addListener("DRIVE", {
+		onTransactRecord : function(code, record) {
+			displayTransaction(code, record);
+		}
+	} );		
 
 	window.setInterval(function() {
 		event_tracker.tick(event_tracker);
@@ -153,5 +185,6 @@
 		<div id="inputControls"></div>
 		<button onClick="submitInputs()">Submit</button>
 	</div>
+	<div id="outputWindow"></div>
 </body>
 </html>
