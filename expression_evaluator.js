@@ -1,3 +1,7 @@
+//#########################################################
+// EXPRESSION EVALUATOR OPTIONS
+//#########################################################
+
 var exp_eval_constants = {
 	OPERATOR : "operator",
 	OPERAND : "operand",
@@ -135,6 +139,14 @@ function ExpEvalOptions() {
 			perform : function(o1,o2) {
 				return Math.pow(parseFloat(o1) , parseFloat(o2));
 			}
+		},
+
+		"ej" : {
+			precedence : 8,
+			regex_symbol : 'ej',
+			perform : function(o1,o2) {
+				return parseFloat(o1) * 6 + parseFloat(o2);
+			}			
 		}
 	};
 
@@ -160,6 +172,10 @@ ExpEvalOptions.prototype.__buildSymbolPattern = function()
 
 	this.SYMBOL_PATTERN += ")";
 }
+
+//#########################################################
+//EXPRESSION EVALUATOR
+//#########################################################
 
 var default_exp_eval_options = new ExpEvalOptions();
 

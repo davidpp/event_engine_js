@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="value_tracker.js"></script>
+	<script src="expression_evaluator.js"></script>
+	<script src="trigger_tracker.js"></script>
+	<script src="event_tracker.js"></script>	
+	<script src="transaction_manager.js"></script>
+	<script>	
+
+	var session_transact = null;
+	var session_inputs = null;
+
+	function showInputs()
+	{
+		var inputView = document.getElementById("inputControls");
+		inputView.innerHTML = "";
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var label_text = session_inputs[key].label;
+			
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input.setAttribute("id", var_name);
+
+			var label = document.createElement("label");
+			input.setAttribute("for", var_name);
+			label.innerHTML = label_text + ": ";
+
+			inputView.appendChild(label);
+			inputView.appendChild(input);
+			inputView.appendChild(document.createElement("br"));			
+		}
+
+		 document.getElementById("inputView").style.visibility = "visible";
+	}
+
+	function submitInputs()
+	{
+		var inputs = new Object();
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var value = document.getElementById(var_name).value;
+
+			inputs[var_name] = value;
+		}		
+
+		session_transact.submitInputs(inputs);
+
+		document.getElementById("inputView").style.visibility = "hidden";sss
+	}
+
+	var input_provider = {
+		onInputRequired : function(transaction, inputs) {
+			session_transact = transaction;
+			session_inputs = inputs;
+
+			showInputs();
+		}
+	};
+
+	var tick = 1000; // 1 tic is 1000 ms
+	var value_tracker = new ValueTracker();
+	var trigger_tracker = new TriggerTracker(value_tracker);
+	var event_tracker = new EventTracker(trigger_tracker);
+	var transaction_manager = new TransactionManager(event_tracker, value_tracker, input_provider);
+
+	trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
+	trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
+
+	event_tracker.addEvent("DRIVE", {
+		raise_trigger : "SPEED_OVER_DRIVE_LIMIT",
+		raise_delay : 5, // 5 ticks
+
+		reset_trigger : "SPEED_BELOW_STOP_LIMIT",
+		reset_delay : 10, // 10 ticks
+
+		repeat_interval : 5 // 5 ticks
+	});
+
+	transaction_manager.addTransaction("DRIVE_START", {
+
+		listen_to : {
+			event : "DRIVE",
+			stage : "RAISE"
+		},
+
+		capture : {
+			system : ["speed", "odometer"]
+		}
+	});
+
+	transaction_manager.addTransaction("DRIVE_STOP", {
+
+		listen_to : {
+			event : "DRIVE",
+			stage : "RESET"
+		},
+
+		capture : {
+			system : ["speed", "odometer" ],
+			user : [
+				{
+					variable : "user_name",
+					label : "Tell me your name"
+				},
+				{
+					variable : "password",
+					label : "Give me your password also please"
+				}
+			]
+		}
+	});	
+
+	transaction_manager.addListener("DRIVE_START", {
+		onTransactRecord : function(code, record) {
+			alert(code);
+		}
+	} )
+
+	transaction_manager.addListener("DRIVE_STOP", {
+		onTransactRecord : function(code, record) {
+			alert(code);
+		}
+	} )	
+
+	window.setInterval(function() {
+		event_tracker.tick(event_tracker);
+	}, tick);
+
+	function setValues()
+	{
+		var speed = parseInt(document.getElementById("speed").value);
+		var odometer = parseInt(document.getElementById("odometer").value);
+
+		value_tracker.newValue("speed", speed);
+		value_tracker.newValue("odometer", odometer);
+	}	
+
+	</script>
+</head>
+<body>
+	<label for="speed">Speed: </label><input type="text" id="speed" /><br>
+	<label for="speed">Odometer: </label><input type="text" id="odometer" /><br>
+	<button onClick="setValues()">Set</button>
+	<div id="inputView" style="visibility:hidden">
+		<div id="inputControls"></div>
+		<button onClick="submitInputs()">Submit</button>
+	</div>
+</body>
+</html>

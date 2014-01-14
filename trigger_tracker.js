@@ -1,3 +1,7 @@
+//#########################################################
+// TRIGGER
+//#########################################################
+
 function Trigger(code, value_tracker) {
 
 	this.__code = code;
@@ -81,6 +85,10 @@ function TriggerTracker(value_tracker) {
 	this.__value_tracker = value_tracker;
 	this.__triggers = new Array();
 }
+
+//#########################################################
+// TRIGGER TRACKER
+//#########################################################
 
 TriggerTracker.prototype.__getTrigger = function(code) {
 

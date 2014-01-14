@@ -1,3 +1,7 @@
+//#########################################################
+// VALUE
+//#########################################################
+
 function Value(code) {
 	
 	this.__code = code;
@@ -26,7 +30,7 @@ Value.prototype.addListener = function(listener) {
 	this.__listeners.push(listener);
 
 	listener.onValueChanged(this.__code, this.__value);
-};
+}
 
 Value.prototype.removeListener = function(listener) {
 
@@ -37,6 +41,10 @@ Value.prototype.removeListener = function(listener) {
 
 	this.__listeners.splice(index, 1);
 }
+
+//#########################################################
+// VALUE TRACKER
+//#########################################################
 
 function ValueTracker() {
 

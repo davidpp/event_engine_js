@@ -80,12 +80,14 @@
 		trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
 		trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
 		trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
+		trigger_tracker.addTrigger("FIVE_SECOND_OVER_50KPH", {conditions:"_time%5==0&&_speed>50"});
 
 		trigger_tracker.addListener("EXCESSIVE_SPEEDING", trigger_listener);
 		trigger_tracker.addListener("SPEED_OVER_LEGAL_LIMIT", trigger_listener);
 		trigger_tracker.addListener("SPEED_BELOW_LEGAL_LIMIT", trigger_listener);
 		trigger_tracker.addListener("SPEED_OVER_DRIVE_LIMIT", trigger_listener);
 		trigger_tracker.addListener("SPEED_BELOW_STOP_LIMIT", trigger_listener);
+		trigger_tracker.addListener("FIVE_SECOND_OVER_50KPH", trigger_listener);
 		
 		// Events
 		event_tracker.addEvent("DRIVE", {
@@ -111,9 +113,14 @@
 		event_tracker.addListener("DRIVE", event_listener);
 		event_tracker.addListener("SPEEDING", event_listener);
 
+		var time = 0;
 		// Once second routine
 		window.setInterval(function() {
-			event_tracker.tick(event_tracker)
+			event_tracker.tick(event_tracker);
+
+			time++;
+
+			value_tracker.newValue("time", time);
 		}, tick);
 
 		// UI Functions

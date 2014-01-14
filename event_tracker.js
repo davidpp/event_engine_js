@@ -1,3 +1,7 @@
+//#########################################################
+// EVENT
+//#########################################################
+
 function Event(code, trigger_tracker) {
 
 	this.__code = code;
@@ -29,7 +33,7 @@ Event.prototype.setOptions = function(options)
 
 	this.__trigger_tracker.addListener(this.__options.raise_trigger, this);	
 	this.__trigger_tracker.addListener(this.__options.reset_trigger, this);
-};
+}
 
 Event.prototype.onTriggerFired = function(code)
 {
@@ -44,7 +48,7 @@ Event.prototype.onTriggerFired = function(code)
 		this.__can_reset = true;
 		this.__reset_counter = 0;
 	}
-};
+}
 
 Event.prototype.onTriggerReleased = function(code)
 {
@@ -102,7 +106,7 @@ Event.prototype.tick = function(time)
 				this.__listeners[key].onReseted(this.__code);
 		}
 	}
-};
+}
 
 Event.prototype.addListener = function(listener)
 {
@@ -110,7 +114,7 @@ Event.prototype.addListener = function(listener)
 
 	if (index == -1)
 		this.__listeners.push(listener);
-};
+}
 
 Event.prototype.removeListener = function(listener)
 {
@@ -121,6 +125,10 @@ Event.prototype.removeListener = function(listener)
 
 	this.__listeners.splice(index, 1);
 }
+
+//#########################################################
+// EVENT TRACKER
+//#########################################################
 
 function EventTracker(trigger_tracker) {
 
