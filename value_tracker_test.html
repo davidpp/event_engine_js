@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="value_tracker.js"></script>
+	<script src="expression_evaluator.js"></script>
+	<script src="trigger_tracker.js"></script>
+	<script>
+
+		// UI Functions
+		function setSpeed()
+		{
+			var speed = parseInt(document.getElementById("speed").value);
+			value_tracker.newValue("speed", speed);
+		}
+
+		function clearMessages()
+		{
+			document.getElementById("messageView").innerHTML = "";
+		}
+
+		function writeMessage(message)
+		{
+			var messageView = document.getElementById("messageView");
+
+			if (null == messageView)
+				return;
+
+			messageView.innerHTML += message;
+		}
+
+		// Actual test code
+		var value_tracker = new ValueTracker();
+
+		var value_listener = {
+
+			onValueChanged : function(code, value) {
+
+				writeMessage("VALUE CHANGED -> " + code + " : " + value + "<br>");
+			},
+		}
+
+		value_tracker.addListener("speed", value_listener);
+
+	</script>
+</head>
+<body>
+	<input type="text" id="speed" />
+	<button onClick="setSpeed()">Set Speed</button>
+	<button onClick="clearMessages()">Clear Messages</button>
+	<div id="messageView"></div>
+</body>

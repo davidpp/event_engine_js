@@ -65,7 +65,6 @@
 		}
 	};
 
-	var tick = 1000; // 1 tic is 1000 ms
 	var value_tracker = new ValueTracker();
 	var trigger_tracker = new TriggerTracker(value_tracker);
 	var event_tracker = new EventTracker(trigger_tracker);
@@ -76,12 +75,12 @@
 
 	event_tracker.addEvent("DRIVE", {
 		raise_trigger : "SPEED_OVER_DRIVE_LIMIT",
-		raise_delay : 5, // 5 ticks
+		raise_delay : 5000,
 
 		reset_trigger : "SPEED_BELOW_STOP_LIMIT",
-		reset_delay : 10, // 10 ticks
+		reset_delay : 10000,
 
-		repeat_interval : 5 // 5 ticks
+		repeat_interval : 5000
 	});
 
 	transaction_manager.addTransaction("DRIVE_START", {
@@ -161,10 +160,6 @@
 			displayTransaction(code, record);
 		}
 	} );		
-
-	window.setInterval(function() {
-		event_tracker.tick(event_tracker);
-	}, tick);
 
 	function setValues()
 	{
