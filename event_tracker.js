@@ -2,18 +2,28 @@
 // EVENT
 //#########################################################
 
-function Event(code, trigger_tracker) {
+function Event(code, message_tracker) {
 
 	this.__code = code;
-	this.__trigger_tracker = trigger_tracker;
+	this.__message_tracker = message_tracker;
 
-	this.__listeners = new Array();
 	this.__options = new Object();
-
 	this.__raised = false;
 	this.__raise_timeout = null;
 	this.__reset_timeout = null;
 	this.__repeat_interval = null;
+
+	this.__message_tracker.addListener("on_trigger_fired", this);
+	this.__message_tracker.addListener("on_trigger_released", this);
+}
+
+Event.prototype.onMessage = function(code, data)
+{
+	switch(code)
+	{
+		case "on_trigger_fired" : this.__onTriggerFired(data); break;
+		case "on_trigger_released" : this.__onTriggerReleased(data); break;
+	}
 }
 
 Event.prototype.setOptions = function(options)
@@ -32,9 +42,6 @@ Event.prototype.setOptions = function(options)
 	this.__reset_timeout = null;
 	this.__repeat_interval = null;
 
-	this.__trigger_tracker.removeListener(this.__options.raise_trigger, this);
-	this.__trigger_tracker.removeListener(this.__options.reset_trigger, this);
-
 	this.__options.raise_delay = options.raise_delay;
 	this.__options.reset_delay = options.reset_delay;
 
@@ -42,23 +49,18 @@ Event.prototype.setOptions = function(options)
 
 	this.__options.raise_trigger = options.raise_trigger;
 	this.__options.reset_trigger = options.reset_trigger;
-
-	this.__trigger_tracker.addListener(this.__options.raise_trigger, this);	
-	this.__trigger_tracker.addListener(this.__options.reset_trigger, this);
 }
 
 function __onEventRepeatTriggerFire(event) {
 
-	for(var key in event.__listeners)
-		event.__listeners[key].onRepeated(event.__code);
+	event.__message_tracker.sendMessage("on_event_repeated", event.__code);
 }
 
 function __onEventRaiseTriggerFire(event) {
 
 	event.__raised = true;
 
-	for(var key in event.__listeners)
-		event.__listeners[key].onRaised(event.__code);
+	event.__message_tracker.sendMessage("on_event_raised", event.__code);
 
 	if ( event.__options.repeat_interval > 0 && event.__repeat_interval == null )
 		event.__repeat_interval = window.setInterval(__onEventRepeatTriggerFire, event.__options.repeat_interval, event);
@@ -70,8 +72,7 @@ function __onEventResetTriggerFire(event) {
 
 	event.__raised = false;
 
-	for (var key in event.__listeners)
-		event.__listeners[key].onReseted(event.__code);
+	event.__message_tracker.sendMessage("on_event_reseted", event.__code);
 
 	if ( event.__repeat_interval != null )
 	{
@@ -82,7 +83,7 @@ function __onEventResetTriggerFire(event) {
 	this.__reset_timeout = null;
 }
 
-Event.prototype.onTriggerFired = function(code)
+Event.prototype.__onTriggerFired = function(code)
 {
 	if (code == this.__options.raise_trigger && this.__raised == false)
 		if (this.__raise_timeout == null)
@@ -93,7 +94,7 @@ Event.prototype.onTriggerFired = function(code)
 			this.__reset_timeout = window.setTimeout(__onEventResetTriggerFire, this.__options.reset_delay, this);
 }
 
-Event.prototype.onTriggerReleased = function(code)
+Event.prototype.__onTriggerReleased = function(code)
 {
 	if (code == this.__options.raise_trigger)
 		if (this.__raise_timeout != null)
@@ -110,31 +111,13 @@ Event.prototype.onTriggerReleased = function(code)
 		}
 }
 
-Event.prototype.addListener = function(listener)
-{
-	var index = this.__listeners.indexOf(listener);
-
-	if (index == -1)
-		this.__listeners.push(listener);
-}
-
-Event.prototype.removeListener = function(listener)
-{
-	var index = this.__listeners.indexOf(listener);
-
-	if (index == -1)
-		return;
-
-	this.__listeners.splice(index, 1);
-}
-
 //#########################################################
 // EVENT TRACKER
 //#########################################################
 
-function EventTracker(trigger_tracker) {
+function EventTracker(message_tracker) {
 
-	this.__trigger_tracker = trigger_tracker;
+	this.__message_tracker = message_tracker;
 
 	this.__events = new Array();
 }
@@ -142,7 +125,7 @@ function EventTracker(trigger_tracker) {
 EventTracker.prototype.__getEvent = function(code)
 {
 	if (this.__events[code] == null)
-		this.__events[code] = new Event(code, this.__trigger_tracker);
+		this.__events[code] = new Event(code, this.__message_tracker);
 
 	return this.__events[code];
 }
@@ -152,19 +135,4 @@ EventTracker.prototype.addEvent = function (code, options)
 	var evnt = this.__getEvent(code);
 
 	evnt.setOptions(options);
-}
-
-EventTracker.prototype.addListener = function(code, listener)
-{
-	var evnt = this.__getEvent(code);
-
-	evnt.addListener(listener);
-}
-
-EventTracker.prototype.removeListener = function(code, listener)
-{
-	if (this.__events[code] == null)
-		return null;
-
-	this.__events[code].removeListener(listener);
 }

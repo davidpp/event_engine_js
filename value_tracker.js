@@ -2,11 +2,12 @@
 // VALUE
 //#########################################################
 
-function Value(code) {
+function Value(code, message_tracker) {
 	
 	this.__code = code;
+	this.__message_tracker = message_tracker;
+
 	this.__value = null;
-	this.__listeners = new Array();
 }
 
 Value.prototype.setValue = function(value) {
@@ -16,45 +17,23 @@ Value.prototype.setValue = function(value) {
 	
 	this.__value = value;
 
-	for (var key in this.__listeners)
-		this.__listeners[key].onValueChanged(this.__code, this.__value);
-}
-
-Value.prototype.addListener = function(listener) {
-
-	var index = this.__listeners.indexOf(listener);
-
-	if (index != -1)
-		return;
-
-	this.__listeners.push(listener);
-
-	listener.onValueChanged(this.__code, this.__value);
-}
-
-Value.prototype.removeListener = function(listener) {
-
-	var index = this.__listeners.indexOf(listener);
-
-	if (index == -1)
-		return;
-
-	this.__listeners.splice(index, 1);
+	this.__message_tracker.sendMessage("on_value_changed", { code : this.__code, value : this.__value });
 }
 
 //#########################################################
 // VALUE TRACKER
 //#########################################################
 
-function ValueTracker() {
+function ValueTracker(message_tracker) {
 
 	this.__values = new Array();
+	this.__message_tracker = message_tracker;
 }
 
 ValueTracker.prototype.__getValue = function(code)
 {
 	if (this.__values[code] == null)
-		this.__values[code] = new Value(code);
+		this.__values[code] = new Value(code, this.__message_tracker);
 
 	return this.__values[code];
 }
@@ -64,19 +43,4 @@ ValueTracker.prototype.newValue = function(code, value)
 	var val = this.__getValue(code);
 
 	val.setValue(value);
-}
-
-ValueTracker.prototype.addListener = function(code, listener) 
-{
-	var val = this.__getValue(code);
-
-	val.addListener(listener);
-}
-
-ValueTracker.prototype.removeListener = function(code, listener)
-{
-	if (this.__values[code] == null)
-		return;
-
-	this.__values[code].removeListener(listener);
 }

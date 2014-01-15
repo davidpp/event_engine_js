@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<script src="message_tracker.js"></script>
 	<script src="value_tracker.js"></script>
 	<script src="expression_evaluator.js"></script>
 	<script src="trigger_tracker.js"></script>
@@ -19,33 +20,17 @@
 			messageView.innerHTML += message;
 		}
 
-		var value_tracker = new ValueTracker();
-		var trigger_tracker = new TriggerTracker(value_tracker);
-		var event_tracker = new EventTracker(trigger_tracker);
+		var message_tracker = new MessageTracker();
+		var value_tracker = new ValueTracker(message_tracker);
+		var trigger_tracker = new TriggerTracker(message_tracker);
+		var event_tracker = new EventTracker(message_tracker);
 
-		var event_listener = {
-			onRaised : function(code)
-			{
-				writeMessage("EVENT RAISED -> " + code + "<br>");
-			},
+        // Triggers
+        trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
+        trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
+        trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
+        trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});		
 
-			onRepeated : function(code)
-			{
-				writeMessage("EVENT REPEATED -> " + code + "<br>");
-			},
-
-			onReseted : function(code)
-			{
-				writeMessage("EVENT RESETED -> " + code + "<br>");
-			}
-		};
-
-		// Triggers
-		trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
-		trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
-		trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
-		trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
-		
 		// Events
 		event_tracker.addEvent("DRIVE", {
 			raise_trigger : "SPEED_OVER_DRIVE_LIMIT",
@@ -67,8 +52,16 @@
 			repeat_interval : 0
 		});
 
-		event_tracker.addListener("DRIVE", event_listener);
-		event_tracker.addListener("SPEEDING", event_listener);
+		var message_listener = {
+			onMessage : function(code, data) {
+
+				writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+			}
+		};
+
+		message_tracker.addListener("on_event_repeated", message_listener);
+		message_tracker.addListener("on_event_raised", message_listener);
+		message_tracker.addListener("on_event_reseted", message_listener);
 
 		// UI Functions
 		function setSpeed()

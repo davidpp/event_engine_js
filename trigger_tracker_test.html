@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<script src="message_tracker.js"></script>
 	<script src="value_tracker.js"></script>
 	<script src="expression_evaluator.js"></script>
 	<script src="trigger_tracker.js"></script>
@@ -31,32 +32,25 @@
 		}
 
 		// Actual test code
-		var value_tracker = new ValueTracker();
-		var trigger_tracker = new TriggerTracker(value_tracker);
-
-		var trigger_listener = {
-
-			onTriggerFired : function(code) {
-
-				writeMessage("TRIGGER FIRED -> " + code + "<br>");
-			},
-
-			onTriggerReleased : function(code) {
-				
-				writeMessage("TRIGGER RELEASED -> " + code + "<br>");
-			}
-		}
+		var message_tracker = new MessageTracker();
+		var value_tracker = new ValueTracker(message_tracker);
+		var trigger_tracker = new TriggerTracker(message_tracker);
 
 		// Triggers
 		trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
 		trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
 		trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
 		trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
-		
-		trigger_tracker.addListener("SPEED_OVER_LEGAL_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_BELOW_LEGAL_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_OVER_DRIVE_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_BELOW_STOP_LIMIT", trigger_listener);
+
+		var message_listener = {
+			onMessage : function(code, data) {
+
+				writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+			}
+		};
+
+		message_tracker.addListener("on_trigger_fired", message_listener);
+		message_tracker.addListener("on_trigger_released", message_listener);
 
 	</script>
 </head>

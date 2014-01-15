@@ -3,9 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<script src="message_tracker.js"></script>
 	<script src="value_tracker.js"></script>
-	<script src="expression_evaluator.js"></script>
-	<script src="trigger_tracker.js"></script>
 	<script>
 
 		// UI Functions
@@ -31,17 +30,16 @@
 		}
 
 		// Actual test code
-		var value_tracker = new ValueTracker();
+		var message_tracker = new MessageTracker()
+		var value_tracker = new ValueTracker(message_tracker);
 
-		var value_listener = {
+		message_tracker.addListener("on_value_changed", {
 
-			onValueChanged : function(code, value) {
+			onMessage : function(code, data) {
 
-				writeMessage("VALUE CHANGED -> " + code + " : " + value + "<br>");
-			},
-		}
-
-		value_tracker.addListener("speed", value_listener);
+				writeMessage("VALUE CHANGED -> " + code + " : " + JSON.stringify(data) + "<br>");
+			}
+		});
 
 	</script>
 </head>

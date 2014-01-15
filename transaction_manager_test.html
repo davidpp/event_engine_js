@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<script src="message_tracker.js"></script>
 	<script src="value_tracker.js"></script>
 	<script src="expression_evaluator.js"></script>
 	<script src="trigger_tracker.js"></script>
@@ -65,10 +66,11 @@
 		}
 	};
 
-	var value_tracker = new ValueTracker();
-	var trigger_tracker = new TriggerTracker(value_tracker);
-	var event_tracker = new EventTracker(trigger_tracker);
-	var transaction_manager = new TransactionManager(event_tracker, value_tracker, input_provider);
+	var message_tracker = new MessageTracker();
+	var value_tracker = new ValueTracker(message_tracker);
+	var trigger_tracker = new TriggerTracker(message_tracker);
+	var event_tracker = new EventTracker(message_tracker);
+	var transaction_manager = new TransactionManager(message_tracker, input_provider);
 
 	trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
 	trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
@@ -129,37 +131,24 @@
 		}
 	});		
 
-	function displayTransaction(code, record)
+	var message_listener = {
+		onMessage : function(code, data) {
+
+			writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+		}
+	};
+
+	message_tracker.addListener("on_transaction_finalized", message_listener);
+
+	function writeMessage(message)
 	{
-		var outputWindow = document.getElementById("outputWindow");
+		var messageView = document.getElementById("messageView");
 
-		outputWindow.innerHTML += "<h5>" + code + "</h5>";
+		if (null == messageView)
+			return;
 
-		for (var key in record)
-		{
-			outputWindow.innerHTML += "<b>" + key + "</b> : " + record[key] + "<br>";
-		}
-
-		outputWindow.innerHTML += "<hr>";
-	}
-
-	transaction_manager.addListener("DRIVE_START", {
-		onTransactRecord : function(code, record) {
-			displayTransaction(code, record);
-		}
-	} );
-
-	transaction_manager.addListener("DRIVE_STOP", {
-		onTransactRecord : function(code, record) {
-			displayTransaction(code, record);
-		}
-	} );
-
-	transaction_manager.addListener("DRIVE", {
-		onTransactRecord : function(code, record) {
-			displayTransaction(code, record);
-		}
-	} );		
+		messageView.innerHTML += message;
+	}	
 
 	function setValues()
 	{
@@ -180,6 +169,6 @@
 		<div id="inputControls"></div>
 		<button onClick="submitInputs()">Submit</button>
 	</div>
-	<div id="outputWindow"></div>
+	<div id="messageView"></div>
 </body>
 </html>
