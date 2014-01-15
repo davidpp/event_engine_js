@@ -6,6 +6,9 @@ function Message(code) {
 
 	this.__code = code;
 	this.__listeners = new Array();
+
+	this.__data = null;
+	this.__data_set = false;
 }
 
 Message.prototype.addListener = function(listener) {
@@ -16,6 +19,9 @@ Message.prototype.addListener = function(listener) {
 		return;
 
 	this.__listeners.push(listener);
+
+	if (this.__data_set == true)
+		listener.onMessage(this.__code, this.__data);
 }
 
 Message.prototype.removeListener = function(listener) {
@@ -30,6 +36,9 @@ Message.prototype.removeListener = function(listener) {
 
 Message.prototype.sendMessage = function(data)
 {
+	this.__data = data;
+	this.__data_set = true;
+
 	for(var key in this.__listeners)
 		this.__listeners[key].onMessage(this.__code, data );
 }
