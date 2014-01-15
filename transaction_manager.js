@@ -1,4 +1,27 @@
 //#########################################################
+// TRANSACTION INSTANCE
+//#########################################################
+
+function TransactionInstance(code, message_tracker)
+{
+	this.__code = code;
+	this.__message_tracker = message_tracker;
+
+	this.__values = new Object();
+}
+
+TransactionInstance.prototype.submitValues = function(values)
+{
+	for(var key in values)
+		this.__values[key] = values[key];
+}
+
+TransactionInstance.prototype.finalize = function()
+{
+	this.__message_tracker.sendMessage("on_transaction_finalized", {code : this.__code, data : this.__values});
+}
+
+//#########################################################
 // TRANSACTION
 //#########################################################
 
@@ -43,37 +66,16 @@ Transaction.prototype.setOptions = function (options) {
 	this.__options.capture = options.capture;
 }
 
-Transaction.prototype.__createRecord = function()
-{
-	var record = new Object();
-
-	for(var key in this.__current_values)
-		record[key] = this.__current_values[key];
-
-	return record;
-}
-
 Transaction.prototype.initiate = function()
 {
+	var ti = new TransactionInstance(this.__code, this.__message_tracker);
+
+	ti.submitValues(this.__current_values);
+
 	if (null != this.__input_provider && null != this.__options.capture.user)
-		this.__input_provider.onInputRequired(this, this.__options.capture.user);
+		this.__input_provider.onInputRequired(ti, this.__options.capture.user);
 	else
-		this.__finalize();
-}
-
-Transaction.prototype.submitInputs = function(inputs)
-{
-	for (var key in inputs)
-		this.__current_values[key] = inputs[key];
-
-	this.__finalize();
-}
-
-Transaction.prototype.__finalize = function()
-{
-	var record = this.__createRecord();
-
-	this.__message_tracker.sendMessage("on_transaction_finalized", {code : this.__code, data:record});
+		ti.finalize();
 }
 
 Transaction.prototype.__onEventRaised = function(code) {

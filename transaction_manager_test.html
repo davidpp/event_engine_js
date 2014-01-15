@@ -52,9 +52,10 @@
 			inputs[var_name] = value;
 		}		
 
-		session_transact.submitInputs(inputs);
+		session_transact.submitValues(inputs);
+		session_transact.finalize();
 
-		document.getElementById("inputView").style.visibility = "hidden";sss
+		document.getElementById("inputView").style.visibility = "hidden";
 	}
 
 	var input_provider = {
