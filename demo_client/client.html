@@ -80,7 +80,7 @@
 
 			writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
 
-			$.post("http://127.0.0.1:8080", JSON.stringify({ transaction : code , record : data }), function() {
+			$.post("http://127.0.0.1:8080", JSON.stringify( data ), function() {
 				writeMessage("Server notify successful!<br>");
 			}, "json");
 
