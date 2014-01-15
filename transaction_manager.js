@@ -39,11 +39,6 @@ function Transaction(code, message_tracker, input_provider) {
 
 	this.__options = new Object();
 	this.__current_values = new Array();
-
-	this.__message_tracker.addListener("on_event_raised", this);
-	this.__message_tracker.addListener("on_event_reseted", this);
-	this.__message_tracker.addListener("on_event_repeated", this);
-	this.__message_tracker.addListener("on_value_changed", this);
 }
 
 Transaction.prototype.onMessage = function(code, data)
@@ -60,10 +55,23 @@ Transaction.prototype.onMessage = function(code, data)
 Transaction.prototype.setOptions = function (options) {
 
 	this.__current_values = new Array();
+	
+	this.__message_tracker.removeListener("on_event_raised", this);
+	this.__message_tracker.removeListener("on_event_reseted", this);
+	this.__message_tracker.removeListener("on_event_repeated", this);
+	this.__message_tracker.removeListener("on_value_changed", this);
 
 	this.__options.listen_to = options.listen_to;
+	if (null != options.listen_to) {
+
+		this.__message_tracker.addListener("on_event_raised", this);
+		this.__message_tracker.addListener("on_event_reseted", this);
+		this.__message_tracker.addListener("on_event_repeated", this);
+	}
 
 	this.__options.capture = options.capture;
+	if (null != options.capture && null != options.capture.system )
+		this.__message_tracker.addListener("on_value_changed", this);
 }
 
 Transaction.prototype.initiate = function()
@@ -72,7 +80,7 @@ Transaction.prototype.initiate = function()
 
 	ti.submitValues(this.__current_values);
 
-	if (null != this.__input_provider && null != this.__options.capture.user)
+	if (null != this.__input_provider && null != this.__options.capture && null != this.__options.capture.user)
 		this.__input_provider.onInputRequired(ti, this.__options.capture.user);
 	else
 		ti.finalize();
@@ -127,4 +135,12 @@ TransactionManager.prototype.addTransaction = function(code, options) {
 	var transaction = this.__getTransaction(code);
 
 	transaction.setOptions(options);
+}
+
+TransactionManager.prototype.invoke = function(code) {
+
+	if (null == this.__transactions[code])
+		return;
+
+	this.__transactions[code].initiate();
 }
