@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="jquery.js"></script>
+
+	<script src="../message_tracker.js"></script>
+	<script src="../value_tracker.js"></script>
+	<script src="../expression_evaluator.js"></script>
+	<script src="../trigger_tracker.js"></script>
+	<script src="../event_tracker.js"></script>	
+	<script src="../transaction_manager.js"></script>
+	<script>	
+
+	var session_transact = null;
+	var session_inputs = null;
+
+	function showInputs()
+	{
+		var inputView = document.getElementById("inputControls");
+		inputView.innerHTML = "";
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var label_text = session_inputs[key].label;
+			
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input.setAttribute("id", var_name);
+
+			var label = document.createElement("label");
+			input.setAttribute("for", var_name);
+			label.innerHTML = label_text + ": ";
+
+			inputView.appendChild(label);
+			inputView.appendChild(input);
+			inputView.appendChild(document.createElement("br"));			
+		}
+
+		 document.getElementById("inputView").style.visibility = "visible";
+	}
+
+	function submitInputs()
+	{
+		var inputs = new Object();
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var value = document.getElementById(var_name).value;
+
+			inputs[var_name] = value;
+		}		
+
+		session_transact.submitValues(inputs);
+		session_transact.finalize();
+
+		document.getElementById("inputView").style.visibility = "hidden";
+	}
+
+	var input_provider = {
+		onInputRequired : function(transaction, inputs) {
+			session_transact = transaction;
+			session_inputs = inputs;
+
+			showInputs();
+		}
+	};
+
+	var message_tracker = new MessageTracker();
+	var value_tracker = new ValueTracker(message_tracker);
+	var trigger_tracker = new TriggerTracker(message_tracker);
+	var event_tracker = new EventTracker(message_tracker);
+	var transaction_manager = new TransactionManager(message_tracker, input_provider);
+
+
+	$.get("http://127.0.0.1:8080", function(data){
+
+		for(var key in data.triggers)
+			trigger_tracker.addTrigger(key, data.triggers[key].options);
+
+		for(var key in data.events)
+			event_tracker.addEvent(key, data.events[key].options);
+
+		for(var key in data.transactions)
+			transaction_manager.addTransaction(key, data.transactions[key].options);
+
+	}, "json");
+
+	var message_listener = {
+		onMessage : function(code, data) {
+
+			writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+		}
+	};
+
+	message_tracker.addListener("on_transaction_finalized", message_listener);
+
+	function writeMessage(message)
+	{
+		var messageView = document.getElementById("messageView");
+
+		if (null == messageView)
+			return;
+
+		messageView.innerHTML += message;
+	}	
+
+	function setValues()
+	{
+		var speed = parseInt(document.getElementById("speed").value);
+		var odometer = parseInt(document.getElementById("odometer").value);
+
+		value_tracker.newValue("speed", speed);
+		value_tracker.newValue("odometer", odometer);
+	}	
+
+	</script>
+</head>
+<body>
+	<label for="speed">Speed: </label><input type="text" id="speed" /><br>
+	<label for="speed">Odometer: </label><input type="text" id="odometer" /><br>
+	<button onClick="setValues()">Set</button>
+	<div id="inputView" style="visibility:hidden">
+		<div id="inputControls"></div>
+		<button onClick="submitInputs()">Submit</button>
+	</div>
+	<div id="messageView"></div>
+</body>
+</html>

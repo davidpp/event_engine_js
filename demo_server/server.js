@@ -47,36 +47,46 @@ var data = {
 
 		DRIVE_STOP : {
 			options : {
-				system : ["speed", "odometer" ],
-				user : [
-					{
-						variable : "user_name",
-						label : "Tell me your name"
-					},
-					{
-						variable : "password",
-						label : "Give me your password also please"
-					}
-				]
+				listen_to : {
+					event : "DRIVE",
+					stage : "RESET"
+				},
+
+				capture : {
+					system : ["speed", "odometer" ],
+					user : [
+						{
+							variable : "user_name",
+							label : "Tell me your name"
+						},
+						{
+							variable : "password",
+							label : "Give me your password also please"
+						}
+					]
+				}
 			}
+		},
+
+		DRIVE : {
+			options : {
+				listen_to : {
+					event : "DRIVE",
+					stage : "REPEAT"
+				},
+
+				capture : {
+					system : ["speed"]
+				}
+			}	
 		}
 	}
 };
 
 http.createServer(function(req, res) {
 
-	var parts = req.url.split("/");
-	var data_name = parts[1];
-
-	if (data[data_name] == null)
-	{
-		res.statusCode = 404;
-		res.end();
-		return;
-	}
-
-	res.writeHead(200, {"Content-Type" : "application/json"});
-	res.write(JSON.stringify(data[data_name]));
-	res.end();
+	res.setHeader("Content-Type" , "application/json");
+	res.setHeader("Access-Control-Allow-Origin", "*");
+	res.end(JSON.stringify(data));
 
 }).listen(8080, "127.0.0.1");
