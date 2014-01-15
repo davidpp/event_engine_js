@@ -85,8 +85,26 @@ var data = {
 
 http.createServer(function(req, res) {
 
-	res.setHeader("Content-Type" , "application/json");
-	res.setHeader("Access-Control-Allow-Origin", "*");
-	res.end(JSON.stringify(data));
+    var body = '';
+    
+    req.on('data', function(data) {
+        body += data;
+    });
+
+    req.on('end', function() {
+		switch(req.method)
+		{
+			case "GET":
+				res.setHeader("Content-Type" , "application/json");
+				res.setHeader("Access-Control-Allow-Origin", "*");
+				res.end(JSON.stringify(data));
+				break;
+
+			case "POST":
+				console.log(body);
+				res.end();
+				break;
+		}
+    });	
 
 }).listen(8080, "127.0.0.1");
