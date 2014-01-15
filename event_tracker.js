@@ -12,18 +12,32 @@ function Event(code, message_tracker) {
 	this.__raise_timeout = null;
 	this.__reset_timeout = null;
 	this.__repeat_interval = null;
-
-	this.__message_tracker.addListener("on_trigger_fired", this);
-	this.__message_tracker.addListener("on_trigger_released", this);
+	this.__listeners = new Array();
 }
 
-Event.prototype.onMessage = function(code, data)
-{
-	switch(code)
-	{
-		case "on_trigger_fired" : this.__onTriggerFired(data); break;
-		case "on_trigger_released" : this.__onTriggerReleased(data); break;
-	}
+Event.prototype.addListener = function(listener) {
+
+	var index = this.__listeners.indexOf(listener);
+
+	if (index != -1)
+		return;
+
+	this.__listeners.push(listener);
+
+	if (this.__raised)
+		listener.onEventRaised(this.__code);
+	else
+		listener.onEventReseted(this.__code);
+}
+
+Event.prototype.removeListener = function(listener) {
+
+	var index = this.__listeners.indexOf(listener);
+
+	if (index == -1)
+		return;
+
+	this.__listeners.splice(index, 1);
 }
 
 Event.prototype.setOptions = function(options)
@@ -46,21 +60,34 @@ Event.prototype.setOptions = function(options)
 	this.__options.reset_delay = options.reset_delay;
 
 	this.__options.repeat_interval = options.repeat_interval;
-
+	
+	this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.raise_trigger});
+	this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
 	this.__options.raise_trigger = options.raise_trigger;
+	this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.raise_trigger});
+	this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
+
+	this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.reset_trigger});
+	this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
 	this.__options.reset_trigger = options.reset_trigger;
+	this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.reset_trigger});
+	this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
 }
 
 function __onEventRepeatTriggerFire(event) {
 
-	event.__message_tracker.sendMessage("on_event_repeated", event.__code);
+	for(var key in event.__listeners)
+		if (null != event.__listeners[key].onEventRepeated)
+			event.__listeners[key].onEventRepeated(event.__code);
 }
 
 function __onEventRaiseTriggerFire(event) {
 
 	event.__raised = true;
 
-	event.__message_tracker.sendMessage("on_event_raised", event.__code);
+	for(var key in event.__listeners)
+		if (null != event.__listeners[key].onEventRaised)
+			event.__listeners[key].onEventRaised(event.__code);
 
 	if ( event.__options.repeat_interval > 0 && event.__repeat_interval == null )
 		event.__repeat_interval = window.setInterval(__onEventRepeatTriggerFire, event.__options.repeat_interval, event);
@@ -72,7 +99,9 @@ function __onEventResetTriggerFire(event) {
 
 	event.__raised = false;
 
-	event.__message_tracker.sendMessage("on_event_reseted", event.__code);
+	for(var key in event.__listeners)
+		if (null != event.__listeners[key].onEventReseted)
+			event.__listeners[key].onEventReseted(event.__code);
 
 	if ( event.__repeat_interval != null )
 	{
@@ -83,7 +112,7 @@ function __onEventResetTriggerFire(event) {
 	this.__reset_timeout = null;
 }
 
-Event.prototype.__onTriggerFired = function(code)
+Event.prototype.onTriggerFired = function(code)
 {
 	if (code == this.__options.raise_trigger && this.__raised == false)
 		if (this.__raise_timeout == null)
@@ -94,7 +123,7 @@ Event.prototype.__onTriggerFired = function(code)
 			this.__reset_timeout = window.setTimeout(__onEventResetTriggerFire, this.__options.reset_delay, this);
 }
 
-Event.prototype.__onTriggerReleased = function(code)
+Event.prototype.onTriggerReleased = function(code)
 {
 	if (code == this.__options.raise_trigger)
 		if (this.__raise_timeout != null)
@@ -120,6 +149,10 @@ function EventTracker(message_tracker) {
 	this.__message_tracker = message_tracker;
 
 	this.__events = new Array();
+
+	this.__message_tracker.setEmitter("onEventReseted", this);
+	this.__message_tracker.setEmitter("onEventRaised", this);
+	this.__message_tracker.setEmitter("onEventRepeated", this);
 }
 
 EventTracker.prototype.__getEvent = function(code)
@@ -135,4 +168,19 @@ EventTracker.prototype.addEvent = function (code, options)
 	var evnt = this.__getEvent(code);
 
 	evnt.setOptions(options);
+}
+
+EventTracker.prototype.addListener = function(listener, options) {
+	
+	var evnt = this.__getEvent(options.code);
+
+	evnt.addListener(listener);
+}
+
+EventTracker.prototype.removeListener = function(listener, options) {
+
+	if (this.__events[options.code] == null)
+		return;
+
+	this.__events[options.code].removeListener(listener);
 }

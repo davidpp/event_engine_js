@@ -53,15 +53,29 @@
 		});
 
 		var message_listener = {
-			onMessage : function(code, data) {
+			onEventRaised : function(code) {
 
-				writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+				writeMessage("RAISED -> " + code + "<br>");
+			},
+
+			onEventRepeated : function(code) {
+
+				writeMessage("REPEATED -> " + code + "<br>");
+			},
+
+			onEventReseted : function(code) {
+
+				writeMessage("RESETED -> " + code + "<br>");
 			}
 		};
 
-		message_tracker.addListener("on_event_repeated", message_listener);
-		message_tracker.addListener("on_event_raised", message_listener);
-		message_tracker.addListener("on_event_reseted", message_listener);
+		message_tracker.addListener("onEventRepeated", message_listener, {code:"DRIVE"});
+		message_tracker.addListener("onEventRaised", message_listener, {code:"DRIVE"});
+		message_tracker.addListener("onEventReseted", message_listener, {code:"DRIVE"});
+
+		message_tracker.addListener("onEventRepeated", message_listener, {code:"SPEEDING"});
+		message_tracker.addListener("onEventRaised", message_listener, {code:"SPEEDING"});
+		message_tracker.addListener("onEventReseted", message_listener, {code:"SPEEDING"});		
 
 		// UI Functions
 		function setSpeed()

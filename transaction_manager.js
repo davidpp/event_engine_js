@@ -2,10 +2,11 @@
 // TRANSACTION INSTANCE
 //#########################################################
 
-function TransactionInstance(code, message_tracker)
+function TransactionInstance(code, message_tracker, listeners)
 {
 	this.__code = code;
 	this.__message_tracker = message_tracker;
+	this.__listeners = listeners;
 
 	this.__values = new Object();
 }
@@ -18,7 +19,8 @@ TransactionInstance.prototype.submitValues = function(values)
 
 TransactionInstance.prototype.finalize = function()
 {
-	this.__message_tracker.sendMessage("on_transaction_finalized", {code : this.__code, data : this.__values});
+	for(var key in this.__listeners)
+		this.__listeners[key].onTransactionFinalized(this.__code, this.__values);
 }
 
 //#########################################################
@@ -39,44 +41,67 @@ function Transaction(code, message_tracker, input_provider) {
 
 	this.__options = new Object();
 	this.__current_values = new Array();
+	this.__listeners = new Array();
 }
 
-Transaction.prototype.onMessage = function(code, data)
-{
-	switch(code)
-	{
-		case "on_event_raised": this.__onEventRaised(data); break;
-		case "on_event_reseted": this.__onEventReseted(data); break;
-		case "on_event_repeated": this.__onEventRepeated(data); break;
-		case "on_value_changed": this.__onValueChanged(data.code, data.value); break;
-	}
+Transaction.prototype.addListener = function(listener) {
+
+	var index = this.__listeners.indexOf(listener);
+
+	if (index != -1)
+		return;
+
+	this.__listeners.push(listener);
+}
+
+Transaction.prototype.removeListener = function(listener) {
+
+	var index = this.__listeners.indexOf(listener);
+
+	if (index == -1)
+		return;
+
+	this.__listeners.splice(index, 1);
 }
 
 Transaction.prototype.setOptions = function (options) {
 
 	this.__current_values = new Array();
 	
-	this.__message_tracker.removeListener("on_event_raised", this);
-	this.__message_tracker.removeListener("on_event_reseted", this);
-	this.__message_tracker.removeListener("on_event_repeated", this);
-	this.__message_tracker.removeListener("on_value_changed", this);
+	if (null != this.__options.listen_to) {
+
+		this.__message_tracker.removeListener("onEventRaised", this, {code:this.__options.listen_to.event});
+		this.__message_tracker.removeListener("onEventReseted", this, {code:this.__options.listen_to.event});
+		this.__message_tracker.removeListener("onEventRepeated", this, {code:this.__options.listen_to.event});
+	}
 
 	this.__options.listen_to = options.listen_to;
-	if (null != options.listen_to) {
 
-		this.__message_tracker.addListener("on_event_raised", this);
-		this.__message_tracker.addListener("on_event_reseted", this);
-		this.__message_tracker.addListener("on_event_repeated", this);
+	if (null != this.__options.listen_to) {
+
+		this.__message_tracker.addListener("onEventRaised", this, {code:this.__options.listen_to.event});
+		this.__message_tracker.addListener("onEventReseted", this, {code:this.__options.listen_to.event});
+		this.__message_tracker.addListener("onEventRepeated", this, {code:this.__options.listen_to.event});
+	}
+
+	if (null != this.__options.capture && null != this.__options.capture.system ) {
+
+		for (var key in this.__options.capture.system)
+			this.__message_tracker.removeListener("onValueChanged", this, {code:this.__options.capture.system[key]});
 	}
 
 	this.__options.capture = options.capture;
-	if (null != options.capture && null != options.capture.system )
-		this.__message_tracker.addListener("on_value_changed", this);
+
+	if (null != this.__options.capture && null != this.__options.capture.system ) {
+		
+		for (var key in this.__options.capture.system)
+			this.__message_tracker.addListener("onValueChanged", this, {code:this.__options.capture.system[key]});
+	}
 }
 
-Transaction.prototype.initiate = function()
-{
-	var ti = new TransactionInstance(this.__code, this.__message_tracker);
+Transaction.prototype.initiate = function() {
+
+	var ti = new TransactionInstance(this.__code, this.__message_tracker, this.__listeners);
 
 	ti.submitValues(this.__current_values);
 
@@ -86,28 +111,27 @@ Transaction.prototype.initiate = function()
 		ti.finalize();
 }
 
-Transaction.prototype.__onEventRaised = function(code) {
+Transaction.prototype.onEventRaised = function(code) {
 
-	if (this.__options.listen_to.event == code && this.__options.listen_to.stage == transaction_constants.RAISE)
+	if (this.__options.listen_to.stage == transaction_constants.RAISE)
 		this.initiate();
 }
 
-Transaction.prototype.__onEventRepeated = function(code) {
+Transaction.prototype.onEventRepeated = function(code) {
 
-	if (this.__options.listen_to.event == code && this.__options.listen_to.stage == transaction_constants.REPEAT)
+	if (this.__options.listen_to.stage == transaction_constants.REPEAT)
 		this.initiate();
 }
 
-Transaction.prototype.__onEventReseted = function(code) {
+Transaction.prototype.onEventReseted = function(code) {
 
-	if (this.__options.listen_to.event == code && this.__options.listen_to.stage == transaction_constants.RESET)
+	if (this.__options.listen_to.stage == transaction_constants.RESET)
 		this.initiate();
 }
 
-Transaction.prototype.__onValueChanged = function(code, value)
+Transaction.prototype.onValueChanged = function(code, value)
 {
-	if (this.__options.capture.system.indexOf(code) != -1)
-		this.__current_values[code] = value;
+	this.__current_values[code] = value;
 }
 
 //#########################################################
@@ -120,6 +144,8 @@ function TransactionManager(message_tracker, input_provider) {
 	this.__input_provider = input_provider;
 
 	this.__transactions = new Array();
+
+	this.__message_tracker.setEmitter("onTransactionFinalized", this);
 }
 
 TransactionManager.prototype.__getTransaction = function(code) {
@@ -143,4 +169,19 @@ TransactionManager.prototype.invoke = function(code) {
 		return;
 
 	this.__transactions[code].initiate();
+}
+
+TransactionManager.prototype.addListener = function(listener, options) {
+	
+	var transaction = this.__getTransaction(options.code);
+
+	transaction.addListener(listener);
+}
+
+TransactionManager.prototype.removeListener = function(listener, options) {
+
+	if (this.__transactions[options.code] == null)
+		return;
+
+	this.__transactions[options.code].removeListener(listener);
 }

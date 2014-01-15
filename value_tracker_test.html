@@ -33,13 +33,13 @@
 		var message_tracker = new MessageTracker()
 		var value_tracker = new ValueTracker(message_tracker);
 
-		message_tracker.addListener("on_value_changed", {
+		message_tracker.addListener("onValueChanged", {
 
-			onMessage : function(code, data) {
+			onValueChanged : function(code, data) {
 
-				writeMessage("VALUE CHANGED -> " + code + " : " + JSON.stringify(data) + "<br>");
+				writeMessage("VALUE CHANGED -> " + code + ", " + data + "<br>");
 			}
-		});
+		}, {code:"speed"});
 
 	</script>
 </head>

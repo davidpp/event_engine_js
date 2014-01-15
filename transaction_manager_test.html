@@ -133,13 +133,15 @@
 	});		
 
 	var message_listener = {
-		onMessage : function(code, data) {
+		onTransactionFinalized : function(code, data) {
 
-			writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+			writeMessage("TransactionFinalized -> " + code + " : " + JSON.stringify(data) + "<br>");
 		}
 	};
 
-	message_tracker.addListener("on_transaction_finalized", message_listener);
+	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE_START"});
+	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE_STOP"});
+	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE"});
 
 	function writeMessage(message)
 	{
