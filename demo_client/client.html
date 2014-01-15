@@ -78,10 +78,10 @@
 	var message_listener = {
 		onMessage : function(code, data) {
 
-			writeMessage("Message -> " + code + " : " + JSON.stringify(data) + "<br>");
+			writeMessage("TRANSACTION -> " + JSON.stringify(data) + "<br>", "transactView");
 
 			$.post("http://127.0.0.1:8080", JSON.stringify( data ), function() {
-				writeMessage("Server notify successful!<br>");
+				writeMessage("Server notify successful!<br>", "transactView");
 			}, "json");
 
 		}
@@ -89,12 +89,20 @@
 
 	message_tracker.addListener("on_transaction_finalized", message_listener);
 
+	message_tracker.addMasterListener({
+		onMessage : function(code, data) {
+
+			writeMessage("MESSAGE: code -> " + code + ", data -> " + JSON.stringify(data) + "<br>");
+		}
+	})
 
 
-
-	function writeMessage(message)
+	function writeMessage(message, target)
 	{
-		var messageView = document.getElementById("messageView");
+		if (target == null)
+			target = "messageView";
+
+		var messageView = document.getElementById(target);
 
 		if (null == messageView)
 			return;
@@ -162,6 +170,11 @@
 		<button onClick="submitInputs()">Submit</button>
 	</div>
 	<div id="transactionListView"></div>
-	<div id="messageView"></div>
+	<table border="1">
+		<tr>
+			<td><div id="transactView"></div></td>
+			<td><div id="messageView"></div></td>
+		</tr>
+	</table>
 </body>
 </html>

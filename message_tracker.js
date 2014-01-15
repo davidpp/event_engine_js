@@ -50,12 +50,16 @@ Message.prototype.sendMessage = function(data)
 function MessageTracker() {
 
 	this.__messages = new Array();
+	this.__master_listeners = new Array();
 }
 
 MessageTracker.prototype.__getMessage = function(code) {
 
 	if ( this.__messages[code] == null )
+	{
 		this.__messages[code] = new Message(code);
+		this.__messages[code].addListener(this);
+	}
 
 	return this.__messages[code];
 }
@@ -75,10 +79,33 @@ MessageTracker.prototype.removeListener = function(code, listener) {
 	this.__messages[code].removeListener(listener);
 }
 
-MessageTracker.prototype.sendMessage = function(code, data)
-{
+MessageTracker.prototype.sendMessage = function(code, data) {
 	if ( this.__messages[code] == null )
 		return;
 
 	this.__messages[code].sendMessage(data);
+}
+
+MessageTracker.prototype.addMasterListener = function(listener) {
+
+	if (this.__master_listeners.indexOf(listener) != -1)
+		return;
+
+	this.__master_listeners.push(listener);
+}
+
+MessageTracker.prototype.removeMasterListener = function(listener) {
+
+	var index = this.__master_listeners.indexOf(listener);
+
+	if (index == -1)
+		return;
+
+	this.__master_listeners.splice(index, 1);
+}
+
+MessageTracker.prototype.onMessage = function(code, data) {
+
+	for(var key in this.__master_listeners)
+		this.__master_listeners[key].onMessage(code, data);
 }
