@@ -31,6 +31,7 @@
 		"DRIVE_START" : {
 			"label" : "Start driving",
 			"options" : {
+				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "RAISE"
@@ -45,6 +46,7 @@
 		"DRIVE_STOP" : {
 			"label" : "Stop driving",
 			"options" : {
+				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "RESET"
@@ -69,6 +71,7 @@
 		"DRIVE" : {
 			"label" : "Still driving",
 			"options" : {
+				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "REPEAT"

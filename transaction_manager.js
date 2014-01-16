@@ -20,20 +20,21 @@ TransactionInstance.prototype.submitValues = function(values)
 TransactionInstance.prototype.finalize = function()
 {
 	for(var key in this.__listeners)
-		this.__listeners[key].onTransactionFinalized(this.__code, this.__values);
+		if(this.__listeners[key].onTransactionFinalized)
+			this.__listeners[key].onTransactionFinalized(this.__code, this.__values);
 }
 
 //#########################################################
 // TRANSACTION
 //#########################################################
 
-var transaction_constants = {
+var event_transaction_constants = {
 	RAISE : "RAISE",
 	REPEAT : "REPEAT",
 	RESET : "RESET"
 }
 
-function Transaction(code, message_tracker, input_provider) {
+function EventTransaction(code, message_tracker, input_provider) {
 
 	this.__code = code;
 	this.__message_tracker = message_tracker;
@@ -42,9 +43,12 @@ function Transaction(code, message_tracker, input_provider) {
 	this.__options = new Object();
 	this.__current_values = new Array();
 	this.__listeners = new Array();
+
+	this.__options.__automatic = false;
+	this.__enabled = true;
 }
 
-Transaction.prototype.addListener = function(listener) {
+EventTransaction.prototype.addListener = function(listener) {
 
 	var index = this.__listeners.indexOf(listener);
 
@@ -54,7 +58,7 @@ Transaction.prototype.addListener = function(listener) {
 	this.__listeners.push(listener);
 }
 
-Transaction.prototype.removeListener = function(listener) {
+EventTransaction.prototype.removeListener = function(listener) {
 
 	var index = this.__listeners.indexOf(listener);
 
@@ -64,9 +68,12 @@ Transaction.prototype.removeListener = function(listener) {
 	this.__listeners.splice(index, 1);
 }
 
-Transaction.prototype.setOptions = function (options) {
+EventTransaction.prototype.setOptions = function (options) {
 
 	this.__current_values = new Array();
+
+	if (null != options.automatic)
+		this.__options.__automatic = options.automatic;
 	
 	if (null != this.__options.listen_to) {
 
@@ -99,7 +106,7 @@ Transaction.prototype.setOptions = function (options) {
 	}
 }
 
-Transaction.prototype.initiate = function() {
+EventTransaction.prototype.initiate = function() {
 
 	var ti = new TransactionInstance(this.__code, this.__message_tracker, this.__listeners);
 
@@ -111,27 +118,53 @@ Transaction.prototype.initiate = function() {
 		ti.finalize();
 }
 
-Transaction.prototype.onEventRaised = function(code) {
+EventTransaction.prototype.onEventRaised = function(code) {
 
-	if (this.__options.listen_to.stage == transaction_constants.RAISE)
+	if (this.__options.__automatic) {
+
+		if (this.__options.listen_to.stage == event_transaction_constants.RAISE) {
+			this.initiate();
+	}
+	else {
+
+		this.__enabled = true;
+	
+		for(var key in this.__listeners)
+			if (this.__listeners[key].onTransactionEnabled)
+				this.__listeners[key].onTransactionEnabled(this.__code, this);
+	}			
+}
+
+EventTransaction.prototype.onEventRepeated = function(code) {
+
+	if (this.__options.__automatic && this.__options.listen_to.stage == event_transaction_constants.REPEAT)
 		this.initiate();
 }
 
-Transaction.prototype.onEventRepeated = function(code) {
+EventTransaction.prototype.onEventReseted = function(code) {
 
-	if (this.__options.listen_to.stage == transaction_constants.REPEAT)
-		this.initiate();
+	if (this.__options.__automatic) {
+		if (this.__options.listen_to.stage == event_transaction_constants.RESET)
+			this.initiate();
+	}
+	else {
+
+		this.__enabled = true;
+	
+		for(var key in this.__listeners)
+			if (this.__listeners[key].onTransactionDisabled)
+				this.__listeners[key].onTransactionDisabled(this.__code, this);
+	}			
 }
 
-Transaction.prototype.onEventReseted = function(code) {
-
-	if (this.__options.listen_to.stage == transaction_constants.RESET)
-		this.initiate();
-}
-
-Transaction.prototype.onValueChanged = function(code, value)
+EventTransaction.prototype.onValueChanged = function(code, value)
 {
 	this.__current_values[code] = value;
+}
+
+EventTransaction.prototype.isEnabled = function()
+{
+	return this.__enabled;
 }
 
 //#########################################################
@@ -146,12 +179,14 @@ function TransactionManager(message_tracker, input_provider) {
 	this.__transactions = new Array();
 
 	this.__message_tracker.setEmitter("onTransactionFinalized", this);
+	this.__message_tracker.setEmitter("onTransactionEnabled", this);
+	this.__message_tracker.setEmitter("onTransactionDisabled", this);
 }
 
-TransactionManager.prototype.__getTransaction = function(code) {
+TransactionManager.prototype.__getTransaction = function(code, type) {
 
 	if (null == this.__transactions[code])
-		this.__transactions[code] = new Transaction(code, this.__message_tracker, this.__input_provider);
+		this.__transactions[code] = new EventTransaction(code, this.__message_tracker, this.__input_provider);
 
 	return this.__transactions[code];
 }
