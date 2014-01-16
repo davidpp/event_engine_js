@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="message_tracker.js"></script>
+	<script src="value_tracker.js"></script>
+	<script>
+
+		// UI Functions
+		function setSpeed()
+		{
+			var speed = parseInt(document.getElementById("speed").value);
+			value_tracker.newValue("speed", speed);
+		}
+
+		function clearMessages()
+		{
+			document.getElementById("messageView").innerHTML = "";
+		}
+
+		function writeMessage(message)
+		{
+			var messageView = document.getElementById("messageView");
+
+			if (null == messageView)
+				return;
+
+			messageView.innerHTML += message;
+		}
+
+		// Actual test code
+		var message_tracker = new MessageTracker()
+		var value_tracker = new ValueTracker(message_tracker);
+
+		message_tracker.addListener("onValueChanged", {
+
+			onValueChanged : function(code, data) {
+
+				writeMessage("VALUE CHANGED -> " + code + ", " + data + "<br>");
+			}
+		}, {code:"speed"});
+
+	</script>
+</head>
+<body>
+	<input type="text" id="speed" />
+	<button onClick="setSpeed()">Set Speed</button>
+	<button onClick="clearMessages()">Clear Messages</button>
+	<div id="messageView"></div>
+</body>

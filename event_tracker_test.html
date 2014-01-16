@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<script src="message_tracker.js"></script>
 	<script src="value_tracker.js"></script>
 	<script src="expression_evaluator.js"></script>
 	<script src="trigger_tracker.js"></script>
@@ -19,105 +20,73 @@
 			messageView.innerHTML += message;
 		}
 
-		var tick = 1000; // 1 tick is 1000 ms
-		var value_tracker = new ValueTracker();
-		var trigger_tracker = new TriggerTracker(value_tracker);
-		var event_tracker = new EventTracker(trigger_tracker);
-		var values = new Array();
+		var message_tracker = new MessageTracker();
+		var value_tracker = new ValueTracker(message_tracker);
+		var trigger_tracker = new TriggerTracker(message_tracker);
+		var event_tracker = new EventTracker(message_tracker);
 
-		// Listeners		
-		var value_listener = {
-			onValueChanged : function(code, value)
-			{
-				writeMessage("VALUE CHANGED: " + code + " = " + value + "<br>");
+        // Triggers
+        trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
+        trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
+        trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
+        trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});		
 
-				values[code] = value;
-			}
-		};
-
-		var trigger_listener = {
-			onTriggerFired : function(code)
-			{
-				writeMessage("TRIGGER FIRED: " + code + "<br>");
-			},
-
-			onTriggerReleased : function(code)
-			{
-				writeMessage("TRIGGER RELEASED: " + code + "<br>");
-			}
-		};
-
-		var event_listener = {
-			onRaised : function(code)
-			{
-				writeMessage("EVENT RAISED " + code + "<br>");
-
-				if (code == "SPEEDING")
-					value_tracker.newValue("speedcount", values["speedcount"] + 1);
-			},
-
-			onReseted : function(code)
-			{
-				writeMessage("EVENT RESETED " + code + "<br>");
-			}
-		};
-		
-		// Values
-		value_tracker.newValue("speed", 0);
-		value_tracker.newValue("speedcount", 0);
-
-		value_tracker.addListener("speed", value_listener);
-		value_tracker.addListener("speedcount", value_listener);
-
-		// Triggers
-		trigger_tracker.addTrigger("EXCESSIVE_SPEEDING", {conditions:"_speedcount==1"});
-		trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
-		trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
-		trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
-		trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
-
-		trigger_tracker.addListener("EXCESSIVE_SPEEDING", trigger_listener);
-		trigger_tracker.addListener("SPEED_OVER_LEGAL_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_BELOW_LEGAL_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_OVER_DRIVE_LIMIT", trigger_listener);
-		trigger_tracker.addListener("SPEED_BELOW_STOP_LIMIT", trigger_listener);
-		
 		// Events
 		event_tracker.addEvent("DRIVE", {
 			raise_trigger : "SPEED_OVER_DRIVE_LIMIT",
-			raise_delay : 5, // 5 ticks
+			raise_delay : 5000,
 
 			reset_trigger : "SPEED_BELOW_STOP_LIMIT",
-			reset_delay : 10, // 10 ticks
+			reset_delay : 10000,
 
-			must_reset : true
+			repeat_interval : 5000
 		});
 
 		event_tracker.addEvent("SPEEDING", {
 			raise_trigger : "SPEED_OVER_LEGAL_LIMIT",
-			raise_delay : 5, // 5 ticks
+			raise_delay : 5000,
 
 			reset_trigger : "SPEED_BELOW_LEGAL_LIMIT",
-			reset_delay : 10, // 10 ticks
+			reset_delay : 10000,
 
-			must_reset : true
+			repeat_interval : 0
 		});
 
-		event_tracker.addListener("DRIVE", event_listener);
-		event_tracker.addListener("SPEEDING", event_listener);
+		var message_listener = {
+			onEventRaised : function(code) {
 
-		// Once second routine
-		window.setInterval(function() {
-			event_tracker.tick(event_tracker)
-		}, tick);
+				writeMessage("RAISED -> " + code + "<br>");
+			},
+
+			onEventRepeated : function(code) {
+
+				writeMessage("REPEATED -> " + code + "<br>");
+			},
+
+			onEventReseted : function(code) {
+
+				writeMessage("RESETED -> " + code + "<br>");
+			}
+		};
+
+		message_tracker.addListener("onEventRepeated", message_listener, {code:"DRIVE"});
+		message_tracker.addListener("onEventRaised", message_listener, {code:"DRIVE"});
+		message_tracker.addListener("onEventReseted", message_listener, {code:"DRIVE"});
+
+		message_tracker.addListener("onEventRepeated", message_listener, {code:"SPEEDING"});
+		message_tracker.addListener("onEventRaised", message_listener, {code:"SPEEDING"});
+		message_tracker.addListener("onEventReseted", message_listener, {code:"SPEEDING"});		
 
 		// UI Functions
 		function setSpeed()
 		{
 			var speed = parseInt(document.getElementById("speed").value);
-
-			writeMessage("--------------------------------------<br>");
 			value_tracker.newValue("speed", speed);
+		}
+
+		function clearMessages()
+		{
+			document.getElementById("messageView").innerHTML = "";
 		}
 
 	</script>
@@ -125,5 +94,6 @@
 <body>
 	<input type="text" id="speed" />
 	<button onClick="setSpeed()">Set Speed</button>
+	<button onClick="clearMessages()">Clear Messages</button>
 	<div id="messageView"></div>
 </body>

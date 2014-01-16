@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="message_tracker.js"></script>
+	<script src="value_tracker.js"></script>
+	<script src="expression_evaluator.js"></script>
+	<script src="trigger_tracker.js"></script>
+	<script>
+
+		// UI Functions
+		function setSpeed()
+		{
+			var speed = parseInt(document.getElementById("speed").value);
+			value_tracker.newValue("speed", speed);
+		}
+
+		function clearMessages()
+		{
+			document.getElementById("messageView").innerHTML = "";
+		}
+
+		function writeMessage(message)
+		{
+			var messageView = document.getElementById("messageView");
+
+			if (null == messageView)
+				return;
+
+			messageView.innerHTML += message;
+		}
+
+		// Actual test code
+		var message_tracker = new MessageTracker();
+		var value_tracker = new ValueTracker(message_tracker);
+		var trigger_tracker = new TriggerTracker(message_tracker);
+
+		// Triggers
+		trigger_tracker.addTrigger("SPEED_OVER_LEGAL_LIMIT", {conditions:"_speed>110"});
+		trigger_tracker.addTrigger("SPEED_BELOW_LEGAL_LIMIT", {conditions:"_speed<=110"});
+		trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
+		trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
+
+		var message_listener = {
+			onTriggerFired : function(code) {
+
+				writeMessage("Fired -> " + code + "<br>");
+			},
+
+			onTriggerReleased : function(code) {
+
+				writeMessage("Released -> " + code + "<br>");	
+			}
+		};
+
+		message_tracker.addListener("onTriggerFired", message_listener, {code:"SPEED_OVER_LEGAL_LIMIT"});
+		message_tracker.addListener("onTriggerReleased", message_listener, {code:"SPEED_OVER_LEGAL_LIMIT"});
+
+		message_tracker.addListener("onTriggerFired", message_listener, {code:"SPEED_BELOW_LEGAL_LIMIT"});
+		message_tracker.addListener("onTriggerReleased", message_listener, {code:"SPEED_BELOW_LEGAL_LIMIT"});
+
+		message_tracker.addListener("onTriggerFired", message_listener, {code:"SPEED_OVER_DRIVE_LIMIT"});
+		message_tracker.addListener("onTriggerReleased", message_listener, {code:"SPEED_OVER_DRIVE_LIMIT"});
+
+		message_tracker.addListener("onTriggerFired", message_listener, {code:"SPEED_BELOW_STOP_LIMIT"});
+		message_tracker.addListener("onTriggerReleased", message_listener, {code:"SPEED_BELOW_STOP_LIMIT"});
+
+	</script>
+</head>
+<body>
+	<input type="text" id="speed" />
+	<button onClick="setSpeed()">Set Speed</button>
+	<button onClick="clearMessages()">Clear Messages</button>
+	<div id="messageView"></div>
+</body>

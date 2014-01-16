@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="jquery.js"></script>
+
+	<script src="../message_tracker.js"></script>
+	<script src="../value_tracker.js"></script>
+	<script src="../expression_evaluator.js"></script>
+	<script src="../trigger_tracker.js"></script>
+	<script src="../event_tracker.js"></script>	
+	<script src="../transaction_manager.js"></script>
+	<script>	
+
+	var session_transact = null;
+	var session_inputs = null;
+
+	function showInputs()
+	{
+		var inputView = document.getElementById("inputControls");
+		inputView.innerHTML = "";
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var label_text = session_inputs[key].label;
+			
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input.setAttribute("id", var_name);
+
+			var label = document.createElement("label");
+			input.setAttribute("for", var_name);
+			label.innerHTML = label_text + ": ";
+
+			inputView.appendChild(label);
+			inputView.appendChild(input);
+			inputView.appendChild(document.createElement("br"));			
+		}
+
+		 document.getElementById("inputView").style.visibility = "visible";
+	}
+
+	function submitInputs()
+	{
+		var inputs = new Object();
+
+		for(var key in session_inputs)
+		{
+			var var_name = session_inputs[key].variable;
+			var value = document.getElementById(var_name).value;
+
+			inputs[var_name] = value;
+		}		
+
+		session_transact.submitValues(inputs);
+		session_transact.finalize();
+
+		document.getElementById("inputView").style.visibility = "hidden";
+	}
+
+	var input_provider = {
+		onInputRequired : function(transaction, inputs) {
+			session_transact = transaction;
+			session_inputs = inputs;
+
+			showInputs();
+		}
+	};
+
+	var message_tracker = new MessageTracker();
+	var value_tracker = new ValueTracker(message_tracker);
+	var trigger_tracker = new TriggerTracker(message_tracker);
+	var event_tracker = new EventTracker(message_tracker);
+	var transaction_manager = new TransactionManager(message_tracker, input_provider);
+
+	var message_listener = {
+		onTransactionFinalized : function(code, data) {
+
+			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>", "transactView");
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({"code":code, "data":data}), function() {
+				writeMessage("Server notify successful!<br>", "transactView");
+			}, "json");
+
+		},
+
+		onTransactionEnabled : function(code)
+		{
+			var button = document.getElementById(code);
+			button.disabled = false;
+		},
+
+		onTransactionDisabled : function(code)
+		{
+			var button = document.getElementById(code);
+			button.disabled = true;
+		},
+	};
+
+/*
+	message_tracker.addMasterListener({
+		onMessage : function(code, data) {
+
+			writeMessage("MESSAGE: code -> " + code + ", data -> " + JSON.stringify(data) + "<br>");
+		}
+	})
+*/
+
+	function writeMessage(message, target)
+	{
+		if (target == null)
+			target = "messageView";
+
+		var messageView = document.getElementById(target);
+
+		if (null == messageView)
+			return;
+
+		messageView.innerHTML += message;
+	}	
+
+	function setValues()
+	{
+		var speed = parseInt(document.getElementById("speed").value);
+		var odometer = parseInt(document.getElementById("odometer").value);
+
+		value_tracker.newValue("speed", speed);
+		value_tracker.newValue("odometer", odometer);
+	}	
+
+	function reload() {
+
+		$.get("http://127.0.0.1:8080", function(data){
+
+			for(var key in data.triggers)
+				trigger_tracker.addTrigger(key, data.triggers[key].options);
+
+			for(var key in data.events)
+				event_tracker.addEvent(key, data.events[key].options);
+
+			showTransactions(data.transactions);
+
+			for(var key in data.transactions) {
+
+				transaction_manager.addTransaction(key, data.transactions[key].options);
+				message_tracker.addListener("onTransactionFinalized", message_listener, {code:key});
+			}
+
+		}, "json");
+	}
+
+	function invokeTransaction(code)
+	{
+		transaction_manager.invoke(code);
+	}
+
+	function showTransactions(transactions)
+	{
+		var transactionListView = document.getElementById("transactionListView");
+		transactionListView.innerHTML = "";
+
+		for( var key in transactions) {
+
+			var button = document.createElement("button");
+			button.setAttribute("id", key);
+			button.setAttribute("onClick", "invokeTransaction('" + key + "')");
+			button.innerHTML = transactions[key].label;
+
+			transactionListView.appendChild(button);
+		}
+	}
+
+	</script>
+</head>
+<body>
+	<label for="speed">Speed: </label><input type="text" id="speed" /><br>
+	<label for="speed">Odometer: </label><input type="text" id="odometer" /><br>
+	<button onClick="setValues()">Set</button>
+	<button onClick="reload()">Reload Configuration</button>
+	<div id="inputView" style="visibility:hidden">
+		<div id="inputControls"></div>
+		<button onClick="submitInputs()">Submit</button>
+	</div>
+	<div id="transactionListView"></div>
+	<table border="1"  style="width:100%">
+		<tr>
+			<td style="width:50%;"><div style="width:100%;height:600px;overflow-y:scroll" id="transactView"></div></td>
+			<td style="width:50%;"><div style="width:100%;height:600px;overflow-y:scroll" id="messageView"></div></td>
+		</tr>
+	</table>
+</body>
+</html>

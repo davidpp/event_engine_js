@@ -1,18 +1,13 @@
+//#########################################################
+// VALUE
+//#########################################################
+
 function Value(code) {
+	
 	this.__code = code;
 	this.__value = null;
+	this.__value_set = false;
 	this.__listeners = new Array();
-}
-
-Value.prototype.setValue = function(value) {
-
-	if (value == this.__value)
-		return;
-	
-	this.__value = value;
-
-	for (var key in this.__listeners)
-		this.__listeners[key].onValueChanged(this.__code, this.__value);
 }
 
 Value.prototype.addListener = function(listener) {
@@ -24,8 +19,9 @@ Value.prototype.addListener = function(listener) {
 
 	this.__listeners.push(listener);
 
-	listener.onValueChanged(this.__code, this.__value);
-};
+	if (this.__value_set)
+		listener.onValueChanged(this.__code, this.__value);
+}
 
 Value.prototype.removeListener = function(listener) {
 
@@ -37,9 +33,27 @@ Value.prototype.removeListener = function(listener) {
 	this.__listeners.splice(index, 1);
 }
 
-function ValueTracker() {
+Value.prototype.setValue = function(value) {
+
+	if (true == this.__value_set && value == this.__value)
+		return;
+
+	this.__value_set = true;
+	this.__value = value;
+
+	for(var key in this.__listeners)
+		this.__listeners[key].onValueChanged(this.__code, this.__value);
+}
+
+//#########################################################
+// VALUE TRACKER
+//#########################################################
+
+function ValueTracker(message_tracker) {
 
 	this.__values = new Array();
+
+	message_tracker.setEmitter("onValueChanged", this);
 }
 
 ValueTracker.prototype.__getValue = function(code)
@@ -57,17 +71,17 @@ ValueTracker.prototype.newValue = function(code, value)
 	val.setValue(value);
 }
 
-ValueTracker.prototype.addListener = function(code, listener) 
-{
-	var val = this.__getValue(code);
+ValueTracker.prototype.addListener = function(listener, options) {
+	
+	var val = this.__getValue(options.code);
 
 	val.addListener(listener);
 }
 
-ValueTracker.prototype.removeListener = function(code, listener)
-{
-	if (this.__values[code] == null)
+ValueTracker.prototype.removeListener = function(listener, options) {
+
+	if (this.__values[options.code] == null)
 		return;
 
-	this.__values[code].removeListener(listener);
+	this.__values[options.code].removeListener(listener);
 }
