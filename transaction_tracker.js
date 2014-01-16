@@ -34,7 +34,7 @@ var event_transaction_constants = {
 	RESET : "RESET"
 };
 
-function EventTransaction(code, message_tracker) {
+function Transaction(code, message_tracker) {
 
 	this.__code = code;
 	this.__message_tracker = message_tracker;
@@ -49,7 +49,7 @@ function EventTransaction(code, message_tracker) {
 	this.__options.capture = new Object();
 }
 
-EventTransaction.prototype.addListener = function(listener) {
+Transaction.prototype.addListener = function(listener) {
 
 	var index = this.__listeners.indexOf(listener);
 
@@ -67,7 +67,7 @@ EventTransaction.prototype.addListener = function(listener) {
 			listener.onTransactionDisabled(this.__code);
 }
 
-EventTransaction.prototype.removeListener = function(listener) {
+Transaction.prototype.removeListener = function(listener) {
 
 	var index = this.__listeners.indexOf(listener);
 
@@ -77,7 +77,7 @@ EventTransaction.prototype.removeListener = function(listener) {
 	this.__listeners.splice(index, 1);
 }
 
-EventTransaction.prototype.setOptions = function (options) {
+Transaction.prototype.setOptions = function (options) {
 
 	this.__current_values = new Array();
 
@@ -134,13 +134,13 @@ EventTransaction.prototype.setOptions = function (options) {
 	}
 }
 
-EventTransaction.prototype.invoke = function() {
+Transaction.prototype.invoke = function() {
 
 	if(this.__enabled)
 		this.__initiate();
 }
 
-EventTransaction.prototype.__initiate = function() {
+Transaction.prototype.__initiate = function() {
 
 	var ti = new TransactionInstance(this.__code, this.__message_tracker, this.__listeners);
 
@@ -156,7 +156,7 @@ EventTransaction.prototype.__initiate = function() {
 		ti.finalize();
 }
 
-EventTransaction.prototype.onEventRaised = function(code) {
+Transaction.prototype.onEventRaised = function(code) {
 
 	if (this.__options.automatic) {
 
@@ -173,13 +173,13 @@ EventTransaction.prototype.onEventRaised = function(code) {
 	}			
 }
 
-EventTransaction.prototype.onEventRepeated = function(code) {
+Transaction.prototype.onEventRepeated = function(code) {
 
 	if (this.__options.automatic && this.__options.listen_to.stage == event_transaction_constants.REPEAT)
 		this.__initiate();
 }
 
-EventTransaction.prototype.onEventReseted = function(code) {
+Transaction.prototype.onEventReseted = function(code) {
 
 	if (this.__options.automatic) {
 
@@ -196,21 +196,21 @@ EventTransaction.prototype.onEventReseted = function(code) {
 	}			
 }
 
-EventTransaction.prototype.onValueChanged = function(code, value)
+Transaction.prototype.onValueChanged = function(code, value)
 {
 	this.__current_values[code] = value;
 }
 
-EventTransaction.prototype.isEnabled = function()
+Transaction.prototype.isEnabled = function()
 {
 	return this.__enabled;
 }
 
 //#########################################################
-// TRANSACTION MANAGER
+// TRANSACTION TRACKER
 //#########################################################
 
-function TransactionManager(message_tracker) {
+function TransactionTracker(message_tracker) {
 
 	this.__message_tracker = message_tracker;
 
@@ -222,22 +222,22 @@ function TransactionManager(message_tracker) {
 	this.__message_tracker.setEmitter("onInputRequired", this);
 }
 
-TransactionManager.prototype.__getTransaction = function(code, type) {
+TransactionTracker.prototype.__getTransaction = function(code, type) {
 
 	if (null == this.__transactions[code])
-		this.__transactions[code] = new EventTransaction(code, this.__message_tracker);
+		this.__transactions[code] = new Transaction(code, this.__message_tracker);
 
 	return this.__transactions[code];
 }
 
-TransactionManager.prototype.addTransaction = function(code, options) {
+TransactionTracker.prototype.addTransaction = function(code, options) {
 
 	var transaction = this.__getTransaction(code);
 
 	transaction.setOptions(options);
 }
 
-TransactionManager.prototype.invoke = function(code) {
+TransactionTracker.prototype.invoke = function(code) {
 
 	if (null == this.__transactions[code])
 		return;
@@ -245,14 +245,14 @@ TransactionManager.prototype.invoke = function(code) {
 	this.__transactions[code].invoke();
 }
 
-TransactionManager.prototype.addListener = function(listener, options) {
+TransactionTracker.prototype.addListener = function(listener, options) {
 	
 	var transaction = this.__getTransaction(options.code);
 
 	transaction.addListener(listener);
 }
 
-TransactionManager.prototype.removeListener = function(listener, options) {
+TransactionTracker.prototype.removeListener = function(listener, options) {
 
 	if (this.__transactions[options.code] == null)
 		return;

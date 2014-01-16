@@ -3,12 +3,12 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
-	<script src="message_tracker.js"></script>
-	<script src="value_tracker.js"></script>
-	<script src="expression_evaluator.js"></script>
-	<script src="trigger_tracker.js"></script>
-	<script src="event_tracker.js"></script>	
-	<script src="transaction_manager.js"></script>
+	<script src="../message_tracker.js"></script>
+	<script src="../value_tracker.js"></script>
+	<script src="../expression_evaluator.js"></script>
+	<script src="../trigger_tracker.js"></script>
+	<script src="../event_tracker.js"></script>	
+	<script src="../transaction_tracker.js"></script>
 	<script>	
 
 	var session_transact = null;
@@ -71,7 +71,7 @@
 	var value_tracker = new ValueTracker(message_tracker);
 	var trigger_tracker = new TriggerTracker(message_tracker);
 	var event_tracker = new EventTracker(message_tracker);
-	var transaction_manager = new TransactionManager(message_tracker, input_provider);
+	var transaction_tracker = new TransactionTracker(message_tracker, input_provider);
 
 	trigger_tracker.addTrigger("SPEED_OVER_DRIVE_LIMIT", {conditions:"_speed>30"});
 	trigger_tracker.addTrigger("SPEED_BELOW_STOP_LIMIT", {conditions:"_speed<5"});
@@ -86,7 +86,7 @@
 		repeat_interval : 5000
 	});
 
-	transaction_manager.addTransaction("DRIVE_START", {
+	transaction_tracker.addTransaction("DRIVE_START", {
 
 		listen_to : {
 			event : "DRIVE",
@@ -98,7 +98,7 @@
 		}
 	});
 
-	transaction_manager.addTransaction("DRIVE_STOP", {
+	transaction_tracker.addTransaction("DRIVE_STOP", {
 
 		listen_to : {
 			event : "DRIVE",
@@ -120,7 +120,7 @@
 		}
 	});	
 
-	transaction_manager.addTransaction("DRIVE", {
+	transaction_tracker.addTransaction("DRIVE", {
 
 		listen_to : {
 			event : "DRIVE",
@@ -132,7 +132,7 @@
 		}
 	});
 
-	transaction_manager.addTransaction("CASE", {
+	transaction_tracker.addTransaction("CASE", {
 
 		automatic : false,
 
