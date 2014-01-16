@@ -4,7 +4,7 @@
 
 function TransactionInstance(code, message_tracker, listeners)
 {
-	this.__code = code;
+	this.code = code;
 	this.__message_tracker = message_tracker;
 	this.__listeners = listeners;
 
@@ -21,7 +21,7 @@ TransactionInstance.prototype.finalize = function()
 {
 	for(var key in this.__listeners)
 		if(this.__listeners[key].onTransactionFinalized)
-			this.__listeners[key].onTransactionFinalized(this.__code, this.__values);
+			this.__listeners[key].onTransactionFinalized(this.code, this.__values);
 }
 
 //#########################################################
@@ -34,11 +34,10 @@ var event_transaction_constants = {
 	RESET : "RESET"
 };
 
-function EventTransaction(code, message_tracker, input_provider) {
+function EventTransaction(code, message_tracker) {
 
 	this.__code = code;
 	this.__message_tracker = message_tracker;
-	this.__input_provider = input_provider;
 
 	this.__enabled = false;	
 	this.__current_values = new Array();
@@ -147,8 +146,12 @@ EventTransaction.prototype.__initiate = function() {
 
 	ti.submitValues(this.__current_values);
 
-	if (null != this.__input_provider && null != this.__options.capture && null != this.__options.capture.user)
-		this.__input_provider.onInputRequired(ti, this.__options.capture.user);
+	if (null != this.__options.capture.user) {
+
+		for (var key in this.__listeners)
+			if (this.__listeners[key].onInputRequired)
+				this.__listeners[key].onInputRequired(ti, this.__options.capture.user);
+	}
 	else
 		ti.finalize();
 }
@@ -207,22 +210,22 @@ EventTransaction.prototype.isEnabled = function()
 // TRANSACTION MANAGER
 //#########################################################
 
-function TransactionManager(message_tracker, input_provider) {
+function TransactionManager(message_tracker) {
 
 	this.__message_tracker = message_tracker;
-	this.__input_provider = input_provider;
 
 	this.__transactions = new Array();
 
 	this.__message_tracker.setEmitter("onTransactionFinalized", this);
 	this.__message_tracker.setEmitter("onTransactionEnabled", this);
 	this.__message_tracker.setEmitter("onTransactionDisabled", this);
+	this.__message_tracker.setEmitter("onInputRequired", this);
 }
 
 TransactionManager.prototype.__getTransaction = function(code, type) {
 
 	if (null == this.__transactions[code])
-		this.__transactions[code] = new EventTransaction(code, this.__message_tracker, this.__input_provider);
+		this.__transactions[code] = new EventTransaction(code, this.__message_tracker);
 
 	return this.__transactions[code];
 }

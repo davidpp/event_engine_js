@@ -37,7 +37,7 @@
 				},
 
 				"capture" : {
-					"system" : ["speed", "odometer"]
+					"system" : ["time", "speed", "odometer"]
 				}
 			}	
 		},
@@ -51,17 +51,8 @@
 				},
 
 				"capture" : {
-					"system" : ["speed", "odometer" ],
-					"user" : [
-						{
-							"variable" : "user_name",
-							"label" : "Tell me your name"
-						},
-						{
-							"variable" : "password",
-							"label" : "Give me your password also please"
-						}
-					]
+					"system" : ["time", "speed", "odometer"],
+					"user" : ["reason", "location"]
 				}
 			}
 		},
@@ -75,7 +66,7 @@
 				},
 
 				"capture" : {
-					"system" : ["speed"]
+					"system" : ["time", "speed"]
 				}
 			}	
 		},
@@ -84,7 +75,7 @@
 			"label" : "This won't be invoked automatically",
 			"options" : {
 				"capture" : {
-					"system" : ["odometer"]
+					"system" : ["time", "odometer"]
 				}
 			}	
 		},
