@@ -130,25 +130,66 @@
 		capture : {
 			system : ["speed", "odometer" ],
 		}
-	});		
+	});
+
+	transaction_manager.addTransaction("CASE", {
+
+		automatic : false,
+
+		listen_to : {
+			event : "DRIVE",
+			stage : "REPEAT"
+		},
+
+		capture : {
+			system : ["speed", "odometer" ],
+		}
+	});	
 
 	var message_listener = {
+
 		onTransactionFinalized : function(code, data) {
 
 			writeMessage("TransactionFinalized -> " + code + " : " + JSON.stringify(data) + "<br>");
-		}
+		},
+
+		onTransactionEnabled : function(code) {
+
+			writeMessage("TransactionEnabled -> " + code + "<br>");
+		},
+
+		onTransactionDisabled : function(code) {
+			
+			writeMessage("TransactionDisabled -> " + code + "<br>");
+		},		
 	};
 
 	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE_START"});
+	message_tracker.addListener("onTransactionEnabled", message_listener, {code:"DRIVE_START"});
+	message_tracker.addListener("onTransactionDisabled", message_listener, {code:"DRIVE_START"});
+
 	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE_STOP"});
+	message_tracker.addListener("onTransactionEnabled", message_listener, {code:"DRIVE_STOP"});
+	message_tracker.addListener("onTransactionDisabled", message_listener, {code:"DRIVE_STOP"});
+
 	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"DRIVE"});
+	message_tracker.addListener("onTransactionEnabled", message_listener, {code:"DRIVE"});
+	message_tracker.addListener("onTransactionDisabled", message_listener, {code:"DRIVE"});
+
+	message_tracker.addListener("onTransactionFinalized", message_listener, {code:"CASE"});
+	message_tracker.addListener("onTransactionEnabled", message_listener, {code:"CASE"});
+	message_tracker.addListener("onTransactionDisabled", message_listener, {code:"CASE"});
+
 
 	function writeMessage(message)
 	{
 		var messageView = document.getElementById("messageView");
 
 		if (null == messageView)
+		{
+			alert(message);
 			return;
+		}
 
 		messageView.innerHTML += message;
 	}	

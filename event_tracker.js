@@ -26,7 +26,7 @@ Event.prototype.addListener = function(listener) {
 
 	if (this.__raised)
 		listener.onEventRaised(this.__code);
-	else
+	else if (this.__raised_once)
 		listener.onEventReseted(this.__code);
 }
 
@@ -42,36 +42,47 @@ Event.prototype.removeListener = function(listener) {
 
 Event.prototype.setOptions = function(options)
 {
-	if (this.__raise_timeout != null)
-		window.clearTimeout(this.__raise_timeout);
-
-	if (this.__reset_timeout != null)
-		window.clearTimeout(this.__reset_timeout);
-
-	if (this.__repeat_interval != null)
-		window.clearInterval(this.__repeat_interval);
-
-	this.__raised = false;
-	this.__raise_timeout = null;
-	this.__reset_timeout = null;
-	this.__repeat_interval = null;
-
 	this.__options.raise_delay = options.raise_delay;
 	this.__options.reset_delay = options.reset_delay;
-
 	this.__options.repeat_interval = options.repeat_interval;
-	
-	this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.raise_trigger});
-	this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
-	this.__options.raise_trigger = options.raise_trigger;
-	this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.raise_trigger});
-	this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
 
-	this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.reset_trigger});
-	this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
-	this.__options.reset_trigger = options.reset_trigger;
-	this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.reset_trigger});
-	this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
+	if ( this.__options.raise_trigger != options.raise_trigger )
+	{
+		if (this.__raise_timeout != null)
+			window.clearTimeout(this.__raise_timeout);
+
+		if (this.__repeat_interval != null)
+			window.clearInterval(this.__repeat_interval);
+
+		this.__raise_timeout = null;
+		this.__repeat_interval = null;		
+
+		this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.raise_trigger});
+		this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
+
+		this.__options.raise_trigger = options.raise_trigger;
+		this.__raised_once = false;
+		this.__raised = false;
+		
+		this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.raise_trigger});
+		this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
+	}
+
+	if (this.__options.reset_trigger != options.reset_trigger)
+	{
+		if (this.__reset_timeout != null)
+			window.clearTimeout(this.__reset_timeout);
+
+		this.__reset_timeout = null;
+
+		this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.reset_trigger});
+		this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
+
+		this.__options.reset_trigger = options.reset_trigger;
+
+		this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.reset_trigger});
+		this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
+	}
 }
 
 function __onEventRepeatTriggerFire(event) {
@@ -84,13 +95,19 @@ function __onEventRepeatTriggerFire(event) {
 function __onEventRaiseTriggerFire(event) {
 
 	event.__raised = true;
+	event.__raised_once = true;
 
 	for(var key in event.__listeners)
 		if (null != event.__listeners[key].onEventRaised)
 			event.__listeners[key].onEventRaised(event.__code);
 
-	if ( event.__options.repeat_interval > 0 && event.__repeat_interval == null )
+	if ( event.__options.repeat_interval > 0 ) {
+
+		if ( event.__repeat_interval != null)
+			window.clearInterval(this.__repeat_interval);
+		
 		event.__repeat_interval = window.setInterval(__onEventRepeatTriggerFire, event.__options.repeat_interval, event);
+	}
 
 	event.__raise_timeout = null
 }
@@ -109,18 +126,26 @@ function __onEventResetTriggerFire(event) {
 		event.__repeat_interval == null
 	}
 
-	this.__reset_timeout = null;
+	event.__reset_timeout = null;
 }
 
 Event.prototype.onTriggerFired = function(code)
 {
-	if (code == this.__options.raise_trigger && this.__raised == false)
-		if (this.__raise_timeout == null)
-			this.__raise_timeout = window.setTimeout(__onEventRaiseTriggerFire, this.__options.raise_delay, this);
+	if (code == this.__options.raise_trigger && this.__raised == false) {		
 
-	if (code == this.__options.reset_trigger && this.__raised == true)
-		if (this.__reset_timeout == null)
-			this.__reset_timeout = window.setTimeout(__onEventResetTriggerFire, this.__options.reset_delay, this);
+		if (this.__raise_timeout != null)
+			window.clearTimeout(this.__raise_timeout);
+
+		this.__raise_timeout = window.setTimeout(__onEventRaiseTriggerFire, this.__options.raise_delay, this);
+	}
+
+	if (code == this.__options.reset_trigger && this.__raised == true) {
+
+		if (this.__reset_timeout != null)
+			window.clearTimeout(this.__reset_timeout);
+
+		this.__reset_timeout = window.setTimeout(__onEventResetTriggerFire, this.__options.reset_delay, this);
+	}
 }
 
 Event.prototype.onTriggerReleased = function(code)

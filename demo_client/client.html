@@ -84,7 +84,19 @@
 				writeMessage("Server notify successful!<br>", "transactView");
 			}, "json");
 
-		}
+		},
+
+		onTransactionEnabled : function(code)
+		{
+			var button = document.getElementById(code);
+			button.disabled = false;
+		},
+
+		onTransactionDisabled : function(code)
+		{
+			var button = document.getElementById(code);
+			button.disabled = true;
+		},
 	};
 
 /*
@@ -128,13 +140,13 @@
 			for(var key in data.events)
 				event_tracker.addEvent(key, data.events[key].options);
 
+			showTransactions(data.transactions);
+
 			for(var key in data.transactions) {
 
 				transaction_manager.addTransaction(key, data.transactions[key].options);
 				message_tracker.addListener("onTransactionFinalized", message_listener, {code:key});
 			}
-
-			showTransactions(data.transactions);
 
 		}, "json");
 	}
@@ -147,10 +159,12 @@
 	function showTransactions(transactions)
 	{
 		var transactionListView = document.getElementById("transactionListView");
+		transactionListView.innerHTML = "";
 
 		for( var key in transactions) {
 
 			var button = document.createElement("button");
+			button.setAttribute("id", key);
 			button.setAttribute("onClick", "invokeTransaction('" + key + "')");
 			button.innerHTML = transactions[key].label;
 

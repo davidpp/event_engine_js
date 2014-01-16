@@ -35,11 +35,10 @@ Value.prototype.removeListener = function(listener) {
 
 Value.prototype.setValue = function(value) {
 
-	this.__value_set = true;
-
-	if (value == this.__value)
+	if (true == this.__value_set && value == this.__value)
 		return;
-	
+
+	this.__value_set = true;
 	this.__value = value;
 
 	for(var key in this.__listeners)

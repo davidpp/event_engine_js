@@ -7,9 +7,11 @@ function Trigger(code, message_tracker) {
 	this.__code = code;
 	this.__message_tracker = message_tracker;
 
+	this.__conditions = "";
 	this.__current_values = new Array();
 	this.__condition_variables = new Array();
 	this.__conditions_met = false;
+	this.__conditions_met_once = false;
 	this.__exp_eval = null;
 	this.__listeners = new Array();
 }
@@ -41,7 +43,7 @@ Trigger.prototype.__callListener = function(listener) {
 		if (null != listener.onTriggerFired)
 			listener.onTriggerFired(this.__code);
 	}
-	else if (null != listener.onTriggerReleased)
+	else if (this.__conditions_met_once && null != listener.onTriggerReleased)
 		listener.onTriggerReleased(this.__code);
 }
 
@@ -65,23 +67,33 @@ Trigger.prototype.onValueChanged = function(code, value) {
 	if (conditions_met != this.__conditions_met )
 	{
 		this.__conditions_met = conditions_met;
+
+		if (this.__conditions_met)
+			this.__conditions_met_once = true;
+
 		this.__callListeners();
 	}	
 }
 
 Trigger.prototype.setOptions = function(options)
 {
-	this.__exp_eval = new ExpEval(options.conditions, this);
+	if( this.__conditions != options.conditions )
+	{
+		this.__conditions = options.conditions;
+		this.__conditions_met = false;
+		this.__conditions_met_once = false;
+		this.__current_values = new Array();
 
-	this.__current_values = new Array();
+		this.__exp_eval = new ExpEval(this.__conditions, this);
 
-	for (var key in this.__condition_variables)
-		this.__message_tracker.removeListener("onValueChanged", this, {code:this.__condition_variables[key]});
+		for (var key in this.__condition_variables)
+			this.__message_tracker.removeListener("onValueChanged", this, {code:this.__condition_variables[key]});
 
-	this.__condition_variables = this.__exp_eval.getVariableList();
+		this.__condition_variables = this.__exp_eval.getVariableList();
 
-	for (var key in this.__condition_variables)
-		this.__message_tracker.addListener("onValueChanged", this, {code:this.__condition_variables[key]});
+		for (var key in this.__condition_variables)
+			this.__message_tracker.addListener("onValueChanged", this, {code:this.__condition_variables[key]});
+	}
 }
 
 //#########################################################

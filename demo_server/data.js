@@ -31,7 +31,6 @@
 		"DRIVE_START" : {
 			"label" : "Start driving",
 			"options" : {
-				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "RAISE"
@@ -46,7 +45,6 @@
 		"DRIVE_STOP" : {
 			"label" : "Stop driving",
 			"options" : {
-				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "RESET"
@@ -71,7 +69,6 @@
 		"DRIVE" : {
 			"label" : "Still driving",
 			"options" : {
-				"automatic" : true,
 				"listen_to" : {
 					"event" : "DRIVE",
 					"stage" : "REPEAT"
@@ -98,24 +95,6 @@
 					"listen_to" : {
 						"event" : "DRIVE",
 						"stage" : "REPEAT"
-				}
-			}
-		},
-
-		"EXAMPLE_USER_DATA" : {
-			"label" : "This captures only user data",
-			"options" : {
-					"listen_to" : {
-						"event" : "DRIVE",
-						"stage" : "RAISE"
-				},
-				"capture" : {
-					"user" : [
-						{
-							"variable" : "user_name",
-							"label" : "Tell me your name"
-						}
-					]
 				}
 			}
 		}
