@@ -87,13 +87,13 @@ Activity.prototype.setOptions = function(options)
 
 Activity.prototype.onTransactionFinalized = function(code, data) {
 
-	if (code == this.__start_transact)
-	{
+	if (code == this.__start_transact) {
+
 		var activity_instance = new ActivityInstance(this.__code, data, this.__listeners);
 		this.__activity_instances.push(activity_instance);		
 	}
-	else if (code == this.__end_transact)
-	{
+	else if (code == this.__end_transact) {
+		
 		if (this.__activity_instances.length == 1) {
 
 			var activity_instance = this.__activity_instances[0];
@@ -102,7 +102,9 @@ Activity.prototype.onTransactionFinalized = function(code, data) {
 		}
 		else {
 
-			// we have to handle this somehow
+			for(var key in this.__listeners)
+				if (this.__listeners[key].onActivityPick)
+					this.__listeners[key].onActivityPick(this.__activity_instances);						
 		}
 	}
 }
@@ -119,6 +121,7 @@ function ActivityTracker(message_tracker) {
 
 	this.__message_tracker.setEmitter("onActivityStarted", this);
 	this.__message_tracker.setEmitter("onActivityEnded", this);
+	this.__message_tracker.setEmitter("onActivityPick", this);
 }
 
 ActivityTracker.prototype.__getActivity = function(code) {
@@ -135,23 +138,7 @@ ActivityTracker.prototype.addActivity = function(code, options) {
 
 	activity.setOptions(options);
 }
-/*
-ActivityTracker.prototype.start = function(code) {
 
-	if (null == this.__activities[code])
-		return;
-
-	this.__activities[code].start();
-}
-
-ActivityTracker.prototype.end = function(code) {
-
-	if (null == this.__activities[code])
-		return;
-
-	this.__activities[code].end();
-}
-*/
 ActivityTracker.prototype.addListener = function(listener, options) {
 
 	var activity = this.__getActivity(options.code);

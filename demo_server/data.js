@@ -51,8 +51,7 @@
 				},
 
 				"capture" : {
-					"system" : ["time", "speed", "odometer"],
-					"user" : ["reason", "location"]
+					"system" : ["time", "speed", "odometer"]
 				}
 			}
 		},
@@ -71,23 +70,23 @@
 			}	
 		},
 
-		"EXAMPLE_NO_EVENT" : {
-			"label" : "This won't be invoked automatically",
+		"LOAD_START" : {
+			"label" : "Start loading",
 			"options" : {
 				"capture" : {
-					"system" : ["time", "odometer"]
+					"system" : ["time"]
 				}
 			}	
 		},
 
-		"EXAMPLE_NO_DATA" : {
-			"label" : "This won't capture any data",
+		"LOAD_END" : {
+			"label" : "Finished loading",
 			"options" : {
-					"listen_to" : {
-						"event" : "DRIVE",
-						"stage" : "REPEAT"
+				"capture" : {
+					"system" : ["time"],
+					"user" : ["waybill"]
 				}
-			}
+			}	
 		}
 	},
 
@@ -97,6 +96,14 @@
 			"options" : {
 				"start_transact" : "DRIVE_START",
 				"end_transact" : "DRIVE_STOP"
+			}
+		},
+
+		"LOADING" : {
+			"label" : "Loading Activity",
+			"options" : {
+				"start_transact" : "LOAD_START",
+				"end_transact" : "LOAD_END"
 			}
 		}
 	}

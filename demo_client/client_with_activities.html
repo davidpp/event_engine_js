@@ -35,18 +35,6 @@
 
 		},
 
-		onTransactionEnabled : function(code) {
-
-			var button = document.getElementById("transact_button_" + code);
-			button.disabled = false;
-		},
-
-		onTransactionDisabled : function(code) {
-
-			var button = document.getElementById("transact_button_" + code);
-			button.disabled = true;
-		},
-
 		onTransactionInputRequired : function(transaction, inputs) {
 
 			showUserInputs(inputs, transaction);
@@ -76,8 +64,6 @@
 			for(var key in data.events)
 				event_tracker.addEvent(key, data.events[key].options);
 
-			showTransactions(data.transactions);
-
 			for(var key in data.transactions) {
 
 				transaction_tracker.addTransaction(key, data.transactions[key].options);
@@ -101,24 +87,54 @@
 		}, "json");
 	}
 
-	function showTransactions(transactions) {
+	function createTransactionButton(transaction) {
 
-		var transaction_list_view = document.getElementById("transaction_list_view");
-		transaction_list_view.innerHTML = "";
+		var button = document.createElement("button");
 
-		for( var key in transactions) {
+		button.id = "transact_button_" + transaction;
+		button.transaction = transaction;
+		button.innerHTML = transaction;
 
-			var button = document.createElement("button");
-			button.id = "transact_button_" + key;
-			button.transaction = key;
-			button.onclick = function() {
+		button.onTransactionEnabled = function(code) {
 
-				transaction_tracker.invoke(this.transaction);
-			}
-			button.innerHTML = transactions[key].label;
-			transaction_list_view.appendChild(button);
+			this.disabled = false;
 		}
+
+		button.onTransactionDisabled = function(code) {
+
+			this.disabled = true;
+		}
+
+		button.onclick = function() {
+
+			transaction_tracker.invoke(this.transaction);
+		}
+
+		message_tracker.addListener("onTransactionEnabled", button, {code:transaction});
+		message_tracker.addListener("onTransactionDisabled", button, {code:transaction});
+
+		return button;
 	}
+
+	function createActivityView(code, options) {
+
+			var activity_view = document.createElement("div");
+			activity_view.style.border = "solid";
+			activity_view.style.display = "inline-block";
+
+			var title = document.createElement("h5");
+			title.innerHTML = code;
+			activity_view.appendChild(title);
+
+			var start_button = createTransactionButton(options.start_transact);
+			activity_view.appendChild(start_button);
+
+			var end_button = createTransactionButton(options.end_transact);
+			activity_view.appendChild(end_button);
+
+			return activity_view;
+	}
+
 
 	function showActivities(activities) {
 
@@ -126,16 +142,8 @@
 		activity_list_view.innerHTML = "";
 
 		for( var key in activities) {
-
-			var button = document.createElement("button");
-			button.id = "activity_start_button_" + key;
-			button.activity = key;
-			button.onclick = function() {
-
-				activity_tracker.start(button.activity);
-			}
-			button.innerHTML = "Start " + activities[key].label;
-			activity_list_view.appendChild(button);
+			var activity_view = createActivityView(key, activities[key].options);
+			activity_list_view.appendChild(activity_view);
 		}
 	}	
 
@@ -256,13 +264,13 @@
 	<button onClick="loadConfiguration()">Reload Configuration</button>
 
 	<div>
-		<h4>Loaded Transactions</h4>
-		<div id="transaction_list_view"></div>
+		<h4>Loaded Activities</h4>
+		<div id="activity_list_view"></div>
 	</div>
 
 	<div>
-		<h4>Loaded Activities</h4>
-		<div id="activity_list_view"></div>
+		<h4>Ongoing Activities</h4>
+		<div id="ongoing_activity_list_view"></div>
 	</div>
 
 	<hr>
