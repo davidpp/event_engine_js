@@ -89,5 +89,15 @@
 				}
 			}
 		}
+	},
+
+	"activities" : {
+		"DRIVING" : {
+			"label" : "Driving Activity",
+			"options" : {
+				"start_transact" : "DRIVE_START",
+				"end_transact" : "DRIVE_STOP"
+			}
+		}
 	}
 }

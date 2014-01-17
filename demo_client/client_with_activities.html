@@ -11,6 +11,7 @@
 	<script src="../trigger_tracker.js"></script>
 	<script src="../event_tracker.js"></script>	
 	<script src="../transaction_tracker.js"></script>
+	<script src="../activity_tracker.js"></script>
 	<script>	
 
 	var message_tracker = new MessageTracker();
@@ -18,16 +19,17 @@
 	var trigger_tracker = new TriggerTracker(message_tracker);
 	var event_tracker = new EventTracker(message_tracker);
 	var transaction_tracker = new TransactionTracker(message_tracker);
+	var activity_tracker = new ActivityTracker(message_tracker);
 
 	window.setInterval(function(){
 		value_tracker.newValue("time", new Date());
 	}, 1000);
 
-	var message_listener = {
+	var transaction_listener = {
 
 		onTransactionFinalized : function(code, data) {
 
-			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>");
+			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>", "transaction_view");
 
 			$.post("http://127.0.0.1:8080", JSON.stringify({"code":code, "data":data}), "json");
 
@@ -46,8 +48,22 @@
 		},
 
 		onTransactionInputRequired : function(transaction, inputs) {
+
 			showUserInputs(inputs, transaction);
 		}		
+	};
+
+	var activity_listener = {
+
+		onActivityStarted : function(activity_instance) {
+
+			writeMessage("ACTIVITY STARTED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
+		},
+
+		onActivityEnded : function(activity_instance) {
+
+			writeMessage("ACTIVITY ENDED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.end_data) + "<br>", "activity_view");
+		}
 	};
 
 	function loadConfiguration() {
@@ -66,11 +82,21 @@
 
 				transaction_tracker.addTransaction(key, data.transactions[key].options);
 
-				message_tracker.addListener("onTransactionFinalized", message_listener, {code:key});
-				message_tracker.addListener("onTransactionEnabled", message_listener, {code:key});
-				message_tracker.addListener("onTransactionDisabled", message_listener, {code:key});
-				message_tracker.addListener("onTransactionInputRequired", message_listener, {code:key});
+				message_tracker.addListener("onTransactionFinalized", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionEnabled", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionDisabled", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionInputRequired", transaction_listener, {code:key});
 			}
+
+			showActivities(data.activities);
+
+			for(var key in data.activities) {
+
+				activity_tracker.addActivity(key, data.activities[key].options);
+
+				message_tracker.addListener("onActivityStarted", activity_listener, {code:key});
+				message_tracker.addListener("onActivityEnded", activity_listener, {code:key});
+			}			
 
 		}, "json");
 	}
@@ -94,14 +120,33 @@
 		}
 	}
 
-	function writeMessage(message) {
+	function showActivities(activities) {
 
-		var message_view = document.getElementById("message_view");
+		var activity_list_view = document.getElementById("activity_list_view");
+		activity_list_view.innerHTML = "";
 
-		if (null == message_view)
+		for( var key in activities) {
+
+			var button = document.createElement("button");
+			button.id = "activity_start_button_" + key;
+			button.activity = key;
+			button.onclick = function() {
+
+				activity_tracker.start(button.activity);
+			}
+			button.innerHTML = "Start " + activities[key].label;
+			activity_list_view.appendChild(button);
+		}
+	}	
+
+	function writeMessage(message, target) {
+
+		var target_view = document.getElementById(target);
+
+		if (null == target_view)
 			return;
 
-		message_view.innerHTML += message;
+		target_view.innerHTML += message;
 	}
 
 	window.onload = function() {
@@ -215,11 +260,24 @@
 		<div id="transaction_list_view"></div>
 	</div>
 
+	<div>
+		<h4>Loaded Activities</h4>
+		<div id="activity_list_view"></div>
+	</div>
+
 	<hr>
 
 	<div>
-		<h4>Messages</h4>
-		<div id="message_view"></div>
+		<table style="width:100%">
+			<tr>
+				<th>Transactions</th>
+				<th>Activities</th>
+			</tr>
+			<tr>
+				<td style="width:50%"><div id="transaction_view"></div></td>
+				<td style="width:50%"><div id="activity_view"></div></td>
+			</tr>
+		</table>
 	</div>
 </body>
 </html>

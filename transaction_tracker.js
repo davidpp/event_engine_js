@@ -149,8 +149,8 @@ Transaction.prototype.__initiate = function() {
 	if (null != this.__options.capture.user) {
 
 		for (var key in this.__listeners)
-			if (this.__listeners[key].onInputRequired)
-				this.__listeners[key].onInputRequired(ti, this.__options.capture.user);
+			if (this.__listeners[key].onTransactionInputRequired)
+				this.__listeners[key].onTransactionInputRequired(ti, this.__options.capture.user);
 	}
 	else
 		ti.finalize();
