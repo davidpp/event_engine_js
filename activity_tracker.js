@@ -19,8 +19,7 @@ function ActivityInstance(code, data, listeners, instances, end_transact) {
 		this.start_data[key] = data[key];
 
 	for(var key in this.__listeners)
-		if (this.__listeners[key].onActivityStarted)
-			this.__listeners[key].onActivityStarted(this);
+		try {this.__listeners[key].onActivityStarted(this);} catch(e) {}
 }
 
 ActivityInstance.prototype.end = function(data) {
@@ -29,8 +28,7 @@ ActivityInstance.prototype.end = function(data) {
 		this.end_data[key] = data[key];
 
 	for(var key in this.__listeners)
-		if (this.__listeners[key].onActivityEnded)
-			this.__listeners[key].onActivityEnded(this);
+		try {this.__listeners[key].onActivityEnded(this);} catch(e) {}
 
 	var index = this.__instances.indexOf(this);
 	if (index != -1)
@@ -124,8 +122,7 @@ Activity.prototype.onTransactionFinalized = function(code, data) {
 		else {
 
 			for(var key in this.__listeners)
-				if (this.__listeners[key].onActivityPick)
-					this.__listeners[key].onActivityPick(instanceList, data);
+				try {this.__listeners[key].onActivityPick(instanceList, data);} catch(e) {}
 		}
 	}
 }

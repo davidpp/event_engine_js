@@ -22,13 +22,12 @@
 	var transaction_tracker = new TransactionTracker(message_tracker);
 	var activity_tracker = new ActivityTracker(message_tracker);
 
-//	value_tracker.newValue("time", new Date());
+	value_tracker.newValue("time", new Date());
 	value_tracker.newValue("speed", 0);
-	/*
 	window.setInterval(function(){
 		value_tracker.newValue("time", new Date());
 	}, 1000);
-*/
+
 	var transaction_listener = {
 
 		onTransactionFinalized : function(code, data) {
@@ -44,6 +43,7 @@
 		}		
 	};
 
+	var activity_instance_to_pick = null;
 	var activity_listener = {
 
 		onActivityStarted : function(activity_instance) {
@@ -51,7 +51,7 @@
 			writeMessage("ACTIVITY STARTED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
 
 			var ongoing_activity_list_view = document.getElementById("ongoing_activity_list_view");
-			var activity_view = createActivityView(activity_instance.code, activity_instance.end_transact);
+			var activity_view = createActivityView(activity_instance.code, activity_instance.end_transact, activity_instance);
 			ongoing_activity_list_view.appendChild(activity_view);
 
 			activity_instance.activity_view = activity_view;
@@ -71,6 +71,11 @@
 		onActivityPick : function(activity_instances, data) {
 
 			writeMessage("ACTIVITY PICK -> Available: " + activity_instances.length + ", Data: " + JSON.stringify(data) + "<br>", "activity_view");
+
+			if (activity_instances.indexOf(activity_instance_to_pick) != -1)
+				activity_instance_to_pick.end(data);
+
+			writeMessage("ACTIVITY PICKED -> GUID: " + activity_instance_to_pick.guid + "<br>", "activity_view");
 		}
 	};
 
@@ -107,12 +112,13 @@
 		}, "json");
 	}
 
-	function createTransactionButton(transaction) {
+	function createTransactionButton(transaction, activity_instance) {
 
 		var button = document.createElement("button");
 
 		button.id = "transact_button_" + transaction;
 		button.transaction = transaction;
+		button.activity_instance = activity_instance;
 		button.innerHTML = transaction;
 
 		button.onTransactionEnabled = function(code) {
@@ -127,6 +133,7 @@
 
 		button.onclick = function() {
 
+			activity_instance_to_pick = this.activity_instance;
 			transaction_tracker.invoke(this.transaction);
 		}
 
@@ -136,7 +143,7 @@
 		return button;
 	}
 
-	function createActivityView(code, transaction) {
+	function createActivityView(code, transaction, activity_instance) {
 
 			var activity_view = document.createElement("div");
 			activity_view.style.border = "solid";
@@ -146,7 +153,7 @@
 			title.innerHTML = code;
 			activity_view.appendChild(title);
 
-			var button = createTransactionButton(transaction);
+			var button = createTransactionButton(transaction, activity_instance);
 			activity_view.appendChild(button);
 
 			return activity_view;

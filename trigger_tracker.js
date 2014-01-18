@@ -39,12 +39,11 @@ Trigger.prototype.removeListener = function(listener) {
 
 Trigger.prototype.__callListener = function(listener) {
 
-	if (this.__conditions_met) {
-		if (null != listener.onTriggerFired)
-			listener.onTriggerFired(this.__code);
-	}
-	else if (this.__conditions_met_once && null != listener.onTriggerReleased)
-		listener.onTriggerReleased(this.__code);
+	if (this.__conditions_met) 
+		try {listener.onTriggerFired(this.__code);} catch(e){}
+
+	else if (this.__conditions_met_once)
+		try {listener.onTriggerReleased(this.__code);} catch(e){}
 }
 
 Trigger.prototype.__callListeners = function() {

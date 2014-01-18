@@ -20,8 +20,7 @@ TransactionInstance.prototype.submitValues = function(values)
 TransactionInstance.prototype.finalize = function()
 {
 	for(var key in this.__listeners)
-		if(this.__listeners[key].onTransactionFinalized)
-			this.__listeners[key].onTransactionFinalized(this.code, this.__values);
+		try {this.__listeners[key].onTransactionFinalized(this.code, this.__values);} catch(e) {}
 }
 
 //#########################################################
@@ -58,13 +57,11 @@ Transaction.prototype.addListener = function(listener) {
 
 	this.__listeners.push(listener);
 
-	if (this.__options.automatic == false && this.__enabled) {
+	if (this.__options.automatic == false && this.__enabled)
+		try {listener.onTransactionEnabled(this.__code);} catch(e) {}
 
-			if(listener.onTransactionEnabled)
-				listener.onTransactionEnabled(this.__code);
-	}
-	else if (listener.onTransactionDisabled)
-			listener.onTransactionDisabled(this.__code);
+	else
+		try {listener.onTransactionDisabled(this.__code);} catch(e) {}
 }
 
 Transaction.prototype.removeListener = function(listener) {
@@ -84,8 +81,7 @@ Transaction.prototype.setOptions = function (options) {
 	// we're reseting the options, disable the transaction
 	this.__enabled = false;
 	for(var key in this.__listeners)
-		if (this.__listeners[key].onTransactionDisabled)
-			this.__listeners[key].onTransactionDisabled(this.__code);	
+		try {this.__listeners[key].onTransactionDisabled(this.__code);} catch(e) {}
 
 	// it the automatic property is missing then set it to false
 	if (null != options.automatic)
@@ -114,8 +110,7 @@ Transaction.prototype.setOptions = function (options) {
 		this.__options.automatic = false;
 
 		for(var key in this.__listeners)
-			if (this.__listeners[key].onTransactionEnabled)
-				this.__listeners[key].onTransactionEnabled(this.__code);
+			try {this.__listeners[key].onTransactionEnabled(this.__code);} catch(e) {}
 	}
 
 	// unregister from the old values
@@ -149,8 +144,7 @@ Transaction.prototype.__initiate = function() {
 	if (null != this.__options.capture.user) {
 
 		for (var key in this.__listeners)
-			if (this.__listeners[key].onTransactionInputRequired)
-				this.__listeners[key].onTransactionInputRequired(ti, this.__options.capture.user);
+			try {this.__listeners[key].onTransactionInputRequired(ti, this.__options.capture.user);} catch(e) {}
 	}
 	else
 		ti.finalize();
@@ -161,8 +155,7 @@ Transaction.prototype.__enable = function() {
 	this.__enabled = true;
 
 	for(var key in this.__listeners)
-		if (this.__listeners[key].onTransactionEnabled)
-			this.__listeners[key].onTransactionEnabled(this.__code);
+		try {this.__listeners[key].onTransactionEnabled(this.__code);} catch(e) {}
 }
 
 Transaction.prototype.__disable = function() {
@@ -170,8 +163,7 @@ Transaction.prototype.__disable = function() {
 	this.__enabled = false;
 
 	for(var key in this.__listeners)
-		if (this.__listeners[key].onTransactionDisabled)
-			this.__listeners[key].onTransactionDisabled(this.__code);
+		try {this.__listeners[key].onTransactionDisabled(this.__code);} catch(e) {}
 }
 
 Transaction.prototype.onEventRaised = function(code) {
@@ -235,7 +227,7 @@ function TransactionTracker(message_tracker) {
 	this.__message_tracker.setEmitter("onTransactionFinalized", this);
 	this.__message_tracker.setEmitter("onTransactionEnabled", this);
 	this.__message_tracker.setEmitter("onTransactionDisabled", this);
-	this.__message_tracker.setEmitter("onInputRequired", this);
+	this.__message_tracker.setEmitter("onTransactionInputRequired", this);
 }
 
 TransactionTracker.prototype.__getTransaction = function(code, type) {
