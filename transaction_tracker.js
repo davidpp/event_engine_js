@@ -156,6 +156,24 @@ Transaction.prototype.__initiate = function() {
 		ti.finalize();
 }
 
+Transaction.prototype.__enable = function() {
+
+	this.__enabled = true;
+
+	for(var key in this.__listeners)
+		if (this.__listeners[key].onTransactionEnabled)
+			this.__listeners[key].onTransactionEnabled(this.__code);
+}
+
+Transaction.prototype.__disable = function() {
+
+	this.__enabled = false;
+
+	for(var key in this.__listeners)
+		if (this.__listeners[key].onTransactionDisabled)
+			this.__listeners[key].onTransactionDisabled(this.__code);
+}
+
 Transaction.prototype.onEventRaised = function(code) {
 
 	if (this.__options.automatic) {
@@ -165,11 +183,10 @@ Transaction.prototype.onEventRaised = function(code) {
 	}
 	else {
 
-		this.__enabled = true;
-	
-		for(var key in this.__listeners)
-			if (this.__listeners[key].onTransactionEnabled)
-				this.__listeners[key].onTransactionEnabled(this.__code);
+		if (this.__options.listen_to.stage == event_transaction_constants.RAISE)
+			this.__enable();
+		else
+			this.__disable();
 	}			
 }
 
@@ -188,11 +205,10 @@ Transaction.prototype.onEventReseted = function(code) {
 	}
 	else {
 
-		this.__enabled = false;
-	
-		for(var key in this.__listeners)
-			if (this.__listeners[key].onTransactionDisabled)
-				this.__listeners[key].onTransactionDisabled(this.__code);
+		if (this.__options.listen_to.stage == event_transaction_constants.RESET)
+			this.__enable();
+		else
+			this.__disable();
 	}			
 }
 

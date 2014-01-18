@@ -2,10 +2,15 @@
 // ACTIVITY INSTANCE
 //#########################################################
 
-function ActivityInstance(code, data, listeners) {
+function ActivityInstance(code, data, listeners, instances, end_transact) {
 
+	this.guid = uuid.v4();
 	this.code = code;
+	this.end_transact = end_transact;
 	this.__listeners = listeners;
+	this.__instances = instances;
+
+	this.__instances.push(this);
 
 	this.start_data = new Object();
 	this.end_data = new Object();
@@ -26,6 +31,10 @@ ActivityInstance.prototype.end = function(data) {
 	for(var key in this.__listeners)
 		if (this.__listeners[key].onActivityEnded)
 			this.__listeners[key].onActivityEnded(this);
+
+	var index = this.__instances.indexOf(this);
+	if (index != -1)
+		this.__instances.splice(index, 1);
 }
 
 //#########################################################
@@ -85,26 +94,38 @@ Activity.prototype.setOptions = function(options)
 	}
 }
 
+Activity.prototype.__getActivityInstaceList = function(code) {
+
+	if (this.__activity_instances[code] == null)
+		this.__activity_instances[code] = new Array();
+
+	return this.__activity_instances[code];
+}
+
 Activity.prototype.onTransactionFinalized = function(code, data) {
 
 	if (code == this.__start_transact) {
 
-		var activity_instance = new ActivityInstance(this.__code, data, this.__listeners);
-		this.__activity_instances.push(activity_instance);		
+		var instanceList = this.__getActivityInstaceList(this.__code);
+
+		var activity_instance = new ActivityInstance(this.__code, data, this.__listeners, instanceList, this.__end_transact);
 	}
 	else if (code == this.__end_transact) {
-		
-		if (this.__activity_instances.length == 1) {
 
-			var activity_instance = this.__activity_instances[0];
-			this.__activity_instances = new Array();
+		var instanceList = this.__activity_instances[this.__code];
+		if (null == instanceList)
+			return;
+		
+		if ( instanceList.length == 1) {
+
+			var activity_instance = instanceList[0];
 			activity_instance.end(data);
 		}
 		else {
 
 			for(var key in this.__listeners)
 				if (this.__listeners[key].onActivityPick)
-					this.__listeners[key].onActivityPick(this.__activity_instances);						
+					this.__listeners[key].onActivityPick(instanceList, data);
 		}
 	}
 }

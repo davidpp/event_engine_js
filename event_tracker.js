@@ -26,7 +26,7 @@ Event.prototype.addListener = function(listener) {
 
 	if (this.__raised)
 		listener.onEventRaised(this.__code);
-	else if (this.__raised_once)
+	else //if (this.__raised_once)
 		listener.onEventReseted(this.__code);
 }
 

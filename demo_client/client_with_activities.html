@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<title>Document</title>
 	<script src="jquery.js"></script>
+	<script src="uuid.js"></script>
 
 	<script src="../message_tracker.js"></script>
 	<script src="../value_tracker.js"></script>
@@ -21,18 +22,20 @@
 	var transaction_tracker = new TransactionTracker(message_tracker);
 	var activity_tracker = new ActivityTracker(message_tracker);
 
+//	value_tracker.newValue("time", new Date());
+	value_tracker.newValue("speed", 0);
+	/*
 	window.setInterval(function(){
 		value_tracker.newValue("time", new Date());
 	}, 1000);
-
+*/
 	var transaction_listener = {
 
 		onTransactionFinalized : function(code, data) {
 
 			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>", "transaction_view");
 
-			$.post("http://127.0.0.1:8080", JSON.stringify({"code":code, "data":data}), "json");
-
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"TRANSACTION", "code":code, "data":data}), "json");
 		},
 
 		onTransactionInputRequired : function(transaction, inputs) {
@@ -46,11 +49,28 @@
 		onActivityStarted : function(activity_instance) {
 
 			writeMessage("ACTIVITY STARTED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
+
+			var ongoing_activity_list_view = document.getElementById("ongoing_activity_list_view");
+			var activity_view = createActivityView(activity_instance.code, activity_instance.end_transact);
+			ongoing_activity_list_view.appendChild(activity_view);
+
+			activity_instance.activity_view = activity_view;
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"START", "code":activity_instance.code, "data":activity_instance.start_data}), "json");
 		},
 
 		onActivityEnded : function(activity_instance) {
 
+			activity_instance.activity_view.parentNode.removeChild(activity_instance.activity_view);
+
 			writeMessage("ACTIVITY ENDED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.end_data) + "<br>", "activity_view");
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"END", "code":activity_instance.code, "data":activity_instance.end_data}), "json");
+		},
+
+		onActivityPick : function(activity_instances, data) {
+
+			writeMessage("ACTIVITY PICK -> Available: " + activity_instances.length + ", Data: " + JSON.stringify(data) + "<br>", "activity_view");
 		}
 	};
 
@@ -116,7 +136,7 @@
 		return button;
 	}
 
-	function createActivityView(code, options) {
+	function createActivityView(code, transaction) {
 
 			var activity_view = document.createElement("div");
 			activity_view.style.border = "solid";
@@ -126,11 +146,8 @@
 			title.innerHTML = code;
 			activity_view.appendChild(title);
 
-			var start_button = createTransactionButton(options.start_transact);
-			activity_view.appendChild(start_button);
-
-			var end_button = createTransactionButton(options.end_transact);
-			activity_view.appendChild(end_button);
+			var button = createTransactionButton(transaction);
+			activity_view.appendChild(button);
 
 			return activity_view;
 	}
@@ -142,7 +159,7 @@
 		activity_list_view.innerHTML = "";
 
 		for( var key in activities) {
-			var activity_view = createActivityView(key, activities[key].options);
+			var activity_view = createActivityView(key, activities[key].options.start_transact);
 			activity_list_view.appendChild(activity_view);
 		}
 	}	
@@ -155,12 +172,17 @@
 			return;
 
 		target_view.innerHTML += message;
+
+  		target_view.scrollTop = target_view.scrollHeight;				
 	}
 
 	window.onload = function() {
 
 		var available_system_values = [ "speed", "odometer", "user_id", "truck_id" ];
 		showSystemInputs(available_system_values);
+
+		var uid = uuid.v4();
+		writeMessage(uid, "uuid_view");
 
 		loadConfiguration();
 	}
@@ -186,8 +208,13 @@
 			button.input_element = input;
 			button.var_name = var_name;
 			button.onclick = function() {
+
+				var value =  this.input_element.value;
+				var val = parseFloat(this.input_element.value);
+				if (val === NaN)
+					val = value;
 		
-				value_tracker.newValue(this.var_name, this.input_element.value);
+				value_tracker.newValue(this.var_name, val);
 			};
 			button.innerHTML = "SET";
 			input_view.appendChild(button);
@@ -249,7 +276,7 @@
 	</script>
 </head>
 <body>
-
+	<div id="uuid_view"></div>
 	<div>
 		<h4>System Variables</h4>
 		<div id="system_inputs"></div>
@@ -282,8 +309,8 @@
 				<th>Activities</th>
 			</tr>
 			<tr>
-				<td style="width:50%"><div id="transaction_view"></div></td>
-				<td style="width:50%"><div id="activity_view"></div></td>
+				<td style="width:50%"><div style="height:350px;overflow-y:scroll;vertical-align:text-top" id="transaction_view"></div></td>
+				<td style="width:50%"><div style="height:350px;overflow-y:scroll;vertical-align:text-top" id="activity_view"></div></td>
 			</tr>
 		</table>
 	</div>

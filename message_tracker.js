@@ -10,8 +10,8 @@ function Message(code) {
 	this.__emitter = null;
 }
 
-Message.prototype.setEmitter = function(emitter)
-{
+Message.prototype.setEmitter = function(emitter) {
+	
 	this.__emitter = emitter;
 
 	for (var key in this.__listeners)
