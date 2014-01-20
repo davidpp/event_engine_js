@@ -46,36 +46,37 @@
 	var activity_instance_to_pick = null;
 	var activity_listener = {
 
-		onActivityStarted : function(activity_instance) {
+		onActivityStarted : function(code, end_transact, activity_instance) {
 
-			writeMessage("ACTIVITY STARTED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
+			writeMessage("ACTIVITY STARTED -> " + code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
 
 			var ongoing_activity_list_view = document.getElementById("ongoing_activity_list_view");
-			var activity_view = createActivityView(activity_instance.code, activity_instance.end_transact, activity_instance);
+			var activity_view = createActivityView(code, end_transact, activity_instance);
 			ongoing_activity_list_view.appendChild(activity_view);
 
 			activity_instance.activity_view = activity_view;
 
-			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"START", "code":activity_instance.code, "data":activity_instance.start_data}), "json");
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"START", "code":code, "data":activity_instance.start_data}), "json");
 		},
 
-		onActivityEnded : function(activity_instance) {
+		onActivityEnded : function(code, activity_instance) {
 
 			activity_instance.activity_view.parentNode.removeChild(activity_instance.activity_view);
 
-			writeMessage("ACTIVITY ENDED -> " + activity_instance.code + ", " + JSON.stringify(activity_instance.end_data) + "<br>", "activity_view");
+			writeMessage("ACTIVITY ENDED -> " + code + ", " + JSON.stringify(activity_instance.end_data) + "<br>", "activity_view");
 
-			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"END", "code":activity_instance.code, "data":activity_instance.end_data}), "json");
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"END", "code":code, "data":activity_instance.end_data}), "json");
 		},
 
-		onActivityPick : function(activity_instances, data) {
+		onActivityPick : function(code, activity_instance, data) {
 
-			writeMessage("ACTIVITY PICK -> Available: " + activity_instances.length + ", Data: " + JSON.stringify(data) + "<br>", "activity_view");
+			writeMessage("ACTIVITY PICK -> Code: " + code + ", Guid: " + activity_instance.guid + "<br>", "activity_view");
 
-			if (activity_instances.indexOf(activity_instance_to_pick) != -1)
+			if (activity_instance == activity_instance_to_pick) {
+
+				writeMessage("ACTIVITY PICKED -> GUID: " + activity_instance.guid + "<br>", "activity_view");
 				activity_instance_to_pick.end(data);
-
-			writeMessage("ACTIVITY PICKED -> GUID: " + activity_instance_to_pick.guid + "<br>", "activity_view");
+			}
 		}
 	};
 
@@ -188,9 +189,6 @@
 		var available_system_values = [ "speed", "odometer", "user_id", "truck_id" ];
 		showSystemInputs(available_system_values);
 
-		var uid = uuid.v4();
-		writeMessage(uid, "uuid_view");
-
 		loadConfiguration();
 	}
 
@@ -283,7 +281,6 @@
 	</script>
 </head>
 <body>
-	<div id="uuid_view"></div>
 	<div>
 		<h4>System Variables</h4>
 		<div id="system_inputs"></div>

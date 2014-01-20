@@ -2,37 +2,23 @@
 // ACTIVITY INSTANCE
 //#########################################################
 
-function ActivityInstance(code, data, listeners, instances, end_transact) {
+function ActivityInstance(activity) {
+
+	this.__activity = activity;
 
 	this.guid = uuid.v4();
-	this.code = code;
-	this.end_transact = end_transact;
-	this.__listeners = listeners;
-	this.__instances = instances;
+}
 
-	this.__instances.push(this);
+ActivityInstance.prototype.start = function(data) {
 
-	this.start_data = new Object();
-	this.end_data = new Object();
-
-	for(var key in data)
-		this.start_data[key] = data[key];
-
-	for(var key in this.__listeners)
-		try {this.__listeners[key].onActivityStarted(this);} catch(e) {}
+	this.start_data = data;
+	this.onStart(this.__activity);
 }
 
 ActivityInstance.prototype.end = function(data) {
 
-	for(var key in data)
-		this.end_data[key] = data[key];
-
-	for(var key in this.__listeners)
-		try {this.__listeners[key].onActivityEnded(this);} catch(e) {}
-
-	var index = this.__instances.indexOf(this);
-	if (index != -1)
-		this.__instances.splice(index, 1);
+	this.end_data = data;
+	this.onEnd(this.__activity);
 }
 
 //#########################################################
@@ -92,37 +78,49 @@ Activity.prototype.setOptions = function(options)
 	}
 }
 
-Activity.prototype.__getActivityInstaceList = function(code) {
-
-	if (this.__activity_instances[code] == null)
-		this.__activity_instances[code] = new Array();
-
-	return this.__activity_instances[code];
-}
-
 Activity.prototype.onTransactionFinalized = function(code, data) {
 
 	if (code == this.__start_transact) {
 
-		var instanceList = this.__getActivityInstaceList(this.__code);
+		var activity_instance = new ActivityInstance(this);
 
-		var activity_instance = new ActivityInstance(this.__code, data, this.__listeners, instanceList, this.__end_transact);
+		activity_instance.onStart = function(activity) {
+
+			var index = activity.__activity_instances.indexOf(this);
+			if (index == -1)
+				activity.__activity_instances.push(this);
+
+			for(var key in activity.__listeners)
+				try {activity.__listeners[key].onActivityStarted(activity.__code, activity.__end_transact, this);} catch(e) {}
+		}
+
+		activity_instance.onEnd = function(activity) {
+
+			var index = activity.__activity_instances.indexOf(this);
+			if (index != -1)
+				activity.__activity_instances.splice(index, 1);
+
+			for(var key in activity.__listeners)
+				try {activity.__listeners[key].onActivityEnded(activity.__code, this);} catch(e) {}
+		}
+
+		activity_instance.start(data);
 	}
 	else if (code == this.__end_transact) {
 
-		var instanceList = this.__activity_instances[this.__code];
-		if (null == instanceList)
+		if ( this.__activity_instances.length == 0 )
 			return;
-		
-		if ( instanceList.length == 1) {
 
-			var activity_instance = instanceList[0];
-			activity_instance.end(data);
+		if ( this.__activity_instances.length == 1) {
+
+			this.__activity_instances[0].end(data);
 		}
 		else {
 
+			var activity_instances = this.__activity_instances.slice();
 			for(var key in this.__listeners)
-				try {this.__listeners[key].onActivityPick(instanceList, data);} catch(e) {}
+				for(var key2 in activity_instances)
+					try {this.__listeners[key].onActivityPick(this.__code, activity_instances[key2], data);} catch(e) {}
 		}
 	}
 }
@@ -152,6 +150,13 @@ ActivityTracker.prototype.__getActivity = function(code) {
 
 ActivityTracker.prototype.addActivity = function(code, options) {
 
+	var activity = this.__getActivity(code);
+
+	activity.setOptions(options);
+}
+
+ActivityTracker.prototype.addActivityInstance = function(code, ActivityInstance)
+{
 	var activity = this.__getActivity(code);
 
 	activity.setOptions(options);
