@@ -25,9 +25,9 @@ Event.prototype.addListener = function(listener) {
 	this.__listeners.push(listener);
 
 	if (this.__raised)
-		listener.onEventRaised(this.__code);
-	else if (this.__raised_once)
-		listener.onEventReseted(this.__code);
+		try {listener.onEventRaised(this.__code);} catch(e){}
+	else
+		try {listener.onEventReseted(this.__code);} catch(e){}
 }
 
 Event.prototype.removeListener = function(listener) {
@@ -88,8 +88,7 @@ Event.prototype.setOptions = function(options)
 function __onEventRepeatTriggerFire(event) {
 
 	for(var key in event.__listeners)
-		if (null != event.__listeners[key].onEventRepeated)
-			event.__listeners[key].onEventRepeated(event.__code);
+		try {event.__listeners[key].onEventRepeated(event.__code);} catch(e) {}
 }
 
 function __onEventRaiseTriggerFire(event) {
@@ -98,8 +97,7 @@ function __onEventRaiseTriggerFire(event) {
 	event.__raised_once = true;
 
 	for(var key in event.__listeners)
-		if (null != event.__listeners[key].onEventRaised)
-			event.__listeners[key].onEventRaised(event.__code);
+		try {event.__listeners[key].onEventRaised(event.__code);} catch(e) {}
 
 	if ( event.__options.repeat_interval > 0 ) {
 
@@ -117,8 +115,7 @@ function __onEventResetTriggerFire(event) {
 	event.__raised = false;
 
 	for(var key in event.__listeners)
-		if (null != event.__listeners[key].onEventReseted)
-			event.__listeners[key].onEventReseted(event.__code);
+			try {event.__listeners[key].onEventReseted(event.__code);} catch(e) {}
 
 	if ( event.__repeat_interval != null )
 	{

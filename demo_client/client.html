@@ -10,14 +10,14 @@
 	<script src="../expression_evaluator.js"></script>
 	<script src="../trigger_tracker.js"></script>
 	<script src="../event_tracker.js"></script>	
-	<script src="../transaction_manager.js"></script>
+	<script src="../transaction_tracker.js"></script>
 	<script>	
 
 	var message_tracker = new MessageTracker();
 	var value_tracker = new ValueTracker(message_tracker);
 	var trigger_tracker = new TriggerTracker(message_tracker);
 	var event_tracker = new EventTracker(message_tracker);
-	var transaction_manager = new TransactionManager(message_tracker);
+	var transaction_tracker = new TransactionTracker(message_tracker);
 
 	window.setInterval(function(){
 		value_tracker.newValue("time", new Date());
@@ -45,7 +45,7 @@
 			button.disabled = true;
 		},
 
-		onInputRequired : function(transaction, inputs) {
+		onTransactionInputRequired : function(transaction, inputs) {
 			showUserInputs(inputs, transaction);
 		}		
 	};
@@ -64,11 +64,12 @@
 
 			for(var key in data.transactions) {
 
-				transaction_manager.addTransaction(key, data.transactions[key].options);
+				transaction_tracker.addTransaction(key, data.transactions[key].options);
 
 				message_tracker.addListener("onTransactionFinalized", message_listener, {code:key});
 				message_tracker.addListener("onTransactionEnabled", message_listener, {code:key});
 				message_tracker.addListener("onTransactionDisabled", message_listener, {code:key});
+				message_tracker.addListener("onTransactionInputRequired", message_listener, {code:key});
 			}
 
 		}, "json");
@@ -86,7 +87,7 @@
 			button.transaction = key;
 			button.onclick = function() {
 
-				transaction_manager.invoke(this.transaction);
+				transaction_tracker.invoke(this.transaction);
 			}
 			button.innerHTML = transactions[key].label;
 			transaction_list_view.appendChild(button);

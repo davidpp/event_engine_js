@@ -13,14 +13,18 @@ http.createServer(function(req, res) {
 		switch(req.method)
 		{
 			case "GET":
-				res.setHeader("Content-Type" , "application/json");
 				res.setHeader("Access-Control-Allow-Origin", "*");
 
 				fs.readFile('data.js', function (err, data) {
-					if (err)
+					if (err) {
+						res.statusCode = 500;
+						res.setHeader("Content-Type" , "text/plain");
 						res.end("Error reading data file!");
-					else
+					}
+					else {
+						res.setHeader("Content-Type" , "application/json");
 						res.end(data);
+					}
 				});
 				break;
 

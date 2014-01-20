@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="jquery.js"></script>
+	<script src="uuid.js"></script>
+
+	<script src="../message_tracker.js"></script>
+	<script src="../value_tracker.js"></script>
+	<script src="../expression_evaluator.js"></script>
+	<script src="../trigger_tracker.js"></script>
+	<script src="../event_tracker.js"></script>	
+	<script src="../transaction_tracker.js"></script>
+	<script src="../activity_tracker.js"></script>
+	<script>	
+
+	var message_tracker = new MessageTracker();
+	var value_tracker = new ValueTracker(message_tracker);
+	var trigger_tracker = new TriggerTracker(message_tracker);
+	var event_tracker = new EventTracker(message_tracker);
+	var transaction_tracker = new TransactionTracker(message_tracker);
+	var activity_tracker = new ActivityTracker(message_tracker);
+
+	value_tracker.newValue("time", new Date());
+	value_tracker.newValue("speed", 0);
+	window.setInterval(function(){
+		value_tracker.newValue("time", new Date());
+	}, 1000);
+
+	var transaction_listener = {
+
+		onTransactionFinalized : function(code, data) {
+
+			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>", "transaction_view");
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"TRANSACTION", "code":code, "data":data}), "json");
+		},
+
+		onTransactionInputRequired : function(transaction, inputs) {
+
+			showUserInputs(inputs, transaction);
+		}		
+	};
+
+	var activity_instance_to_pick = null;
+	var activity_listener = {
+
+		onActivityStarted : function(code, end_transact, activity_instance) {
+
+			writeMessage("ACTIVITY STARTED -> " + code + ", " + JSON.stringify(activity_instance.start_data) + "<br>", "activity_view");
+
+			var ongoing_activity_list_view = document.getElementById("ongoing_activity_list_view");
+			var activity_view = createActivityView(code, end_transact, activity_instance);
+			ongoing_activity_list_view.appendChild(activity_view);
+
+			activity_instance.activity_view = activity_view;
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"START", "code":code, "data":activity_instance.start_data}), "json");
+		},
+
+		onActivityEnded : function(code, activity_instance) {
+
+			activity_instance.activity_view.parentNode.removeChild(activity_instance.activity_view);
+
+			writeMessage("ACTIVITY ENDED -> " + code + ", " + JSON.stringify(activity_instance.end_data) + "<br>", "activity_view");
+
+			$.post("http://127.0.0.1:8080", JSON.stringify({type:"ACTIVITY", guid:activity_instance.guid, state:"END", "code":code, "data":activity_instance.end_data}), "json");
+		},
+
+		onActivityPick : function(code, activity_instance, data) {
+
+			writeMessage("ACTIVITY PICK -> Code: " + code + ", Guid: " + activity_instance.guid + "<br>", "activity_view");
+
+			if (activity_instance == activity_instance_to_pick) {
+
+				writeMessage("ACTIVITY PICKED -> GUID: " + activity_instance.guid + "<br>", "activity_view");
+				activity_instance_to_pick.end(data);
+			}
+		}
+	};
+
+	function loadConfiguration() {
+
+		$.get("http://127.0.0.1:8080", function(data){
+
+			for(var key in data.triggers)
+				trigger_tracker.addTrigger(key, data.triggers[key].options);
+
+			for(var key in data.events)
+				event_tracker.addEvent(key, data.events[key].options);
+
+			for(var key in data.transactions) {
+
+				transaction_tracker.addTransaction(key, data.transactions[key].options);
+
+				message_tracker.addListener("onTransactionFinalized", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionEnabled", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionDisabled", transaction_listener, {code:key});
+				message_tracker.addListener("onTransactionInputRequired", transaction_listener, {code:key});
+			}
+
+			showActivities(data.activities);
+
+			for(var key in data.activities) {
+
+				activity_tracker.addActivity(key, data.activities[key].options);
+
+				message_tracker.addListener("onActivityStarted", activity_listener, {code:key});
+				message_tracker.addListener("onActivityEnded", activity_listener, {code:key});
+			}			
+
+		}, "json");
+	}
+
+	function createTransactionButton(transaction, activity_instance) {
+
+		var button = document.createElement("button");
+
+		button.id = "transact_button_" + transaction;
+		button.transaction = transaction;
+		button.activity_instance = activity_instance;
+		button.innerHTML = transaction;
+
+		button.onTransactionEnabled = function(code) {
+
+			this.disabled = false;
+		}
+
+		button.onTransactionDisabled = function(code) {
+
+			this.disabled = true;
+		}
+
+		button.onclick = function() {
+
+			activity_instance_to_pick = this.activity_instance;
+			transaction_tracker.invoke(this.transaction);
+		}
+
+		message_tracker.addListener("onTransactionEnabled", button, {code:transaction});
+		message_tracker.addListener("onTransactionDisabled", button, {code:transaction});
+
+		return button;
+	}
+
+	function createActivityView(code, transaction, activity_instance) {
+
+			var activity_view = document.createElement("div");
+			activity_view.style.border = "solid";
+			activity_view.style.display = "inline-block";
+
+			var title = document.createElement("h5");
+			title.innerHTML = code;
+			activity_view.appendChild(title);
+
+			var button = createTransactionButton(transaction, activity_instance);
+			activity_view.appendChild(button);
+
+			return activity_view;
+	}
+
+
+	function showActivities(activities) {
+
+		var activity_list_view = document.getElementById("activity_list_view");
+		activity_list_view.innerHTML = "";
+
+		for( var key in activities) {
+			var activity_view = createActivityView(key, activities[key].options.start_transact);
+			activity_list_view.appendChild(activity_view);
+		}
+	}	
+
+	function writeMessage(message, target) {
+
+		var target_view = document.getElementById(target);
+
+		if (null == target_view)
+			return;
+
+		target_view.innerHTML += message;
+
+  		target_view.scrollTop = target_view.scrollHeight;				
+	}
+
+	window.onload = function() {
+
+		var available_system_values = [ "speed", "odometer", "user_id", "truck_id" ];
+		showSystemInputs(available_system_values);
+
+		loadConfiguration();
+	}
+
+	function showSystemInputs(input_list)	{
+
+		var input_view = document.createElement("div");
+
+		for(var key in input_list) {
+
+			var var_name = input_list[key];
+			var var_label = input_list[key];
+			
+			var label = document.createElement("label");
+			label.innerHTML = var_label + ": ";
+			input_view.appendChild(label);
+
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input_view.appendChild(input);
+
+			var button = document.createElement("button");
+			button.input_element = input;
+			button.var_name = var_name;
+			button.onclick = function() {
+
+				var value =  this.input_element.value;
+				var val = parseFloat(this.input_element.value);
+				if (val === NaN)
+					val = value;
+		
+				value_tracker.newValue(this.var_name, val);
+			};
+			button.innerHTML = "SET";
+			input_view.appendChild(button);
+			
+			input_view.appendChild(document.createElement("br"));
+		}
+
+		document.getElementById("system_inputs").appendChild(input_view);
+	}
+
+	function showUserInputs(input_list, transaction)
+	{
+		var input_view = document.createElement("div");
+		
+		var caption = document.createElement("h6");
+		caption.innerHTML = transaction.code;
+		input_view.appendChild(caption);
+
+		var button = document.createElement("button");
+		button.transaction = transaction;
+		button.master_view = input_view;
+		button.onclick = function() {
+			var inputs = new Object();
+
+			for(var key in this.input_elements)
+				inputs[key] = this.input_elements[key].value;
+
+			this.transaction.submitValues(inputs);
+			this.transaction.finalize();
+
+			this.master_view.parentNode.removeChild(this.master_view);
+		};
+		button.innerHTML = "SUBMIT";
+		button.input_elements = new Object();
+
+		for(var key in input_list) {
+
+			var var_name = input_list[key];
+			var var_label = input_list[key];
+			
+			var label = document.createElement("label");
+			label.innerHTML = var_label + ": ";
+			input_view.appendChild(label);
+
+			var input = document.createElement("input");
+			input.setAttribute("type", "text");
+			input_view.appendChild(input);
+
+			button.input_elements[var_name] = input;
+		
+			input_view.appendChild(document.createElement("br"));
+		}
+
+		input_view.appendChild(button);
+
+		document.getElementById("user_inputs").appendChild(input_view);
+	}	
+
+	</script>
+</head>
+<body>
+	<div>
+		<h4>System Variables</h4>
+		<div id="system_inputs"></div>
+	</div>
+	<div>
+		<h4>User Variables</h4>
+		<div id="user_inputs"></div>
+	</div>
+
+	<hr>
+
+	<button onClick="loadConfiguration()">Reload Configuration</button>
+
+	<div>
+		<h4>Loaded Activities</h4>
+		<div id="activity_list_view"></div>
+	</div>
+
+	<div>
+		<h4>Ongoing Activities</h4>
+		<div id="ongoing_activity_list_view"></div>
+	</div>
+
+	<hr>
+
+	<div>
+		<table style="width:100%">
+			<tr>
+				<th>Transactions</th>
+				<th>Activities</th>
+			</tr>
+			<tr>
+				<td style="width:50%"><div style="height:350px;overflow-y:scroll;vertical-align:text-top" id="transaction_view"></div></td>
+				<td style="width:50%"><div style="height:350px;overflow-y:scroll;vertical-align:text-top" id="activity_view"></div></td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

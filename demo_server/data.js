@@ -1,5 +1,6 @@
 {
 	"triggers" : {
+
 		"SPEED_OVER_DRIVE_LIMIT" : {
 			"options" : {
 				"conditions":"_speed>30"
@@ -9,6 +10,18 @@
 		"SPEED_BELOW_STOP_LIMIT" : {
 			"options" : {
 				"conditions":"_speed<5"
+			}
+		},
+
+		"SPEED_OVER_SPEED_LIMIT" : {
+			"options" : {
+				"conditions":"_speed>110"
+			}
+		},
+
+		"SPEED_BELOW_SPEED_LIMIT" : {
+			"options" : {
+				"conditions":"_speed<110"
 			}
 		}
 	},
@@ -24,12 +37,24 @@
 
 				"repeat_interval" : 5000
 			}
-		}
+		},
+
+		"SPEEDING" : {
+			"options" : {
+				"raise_trigger" : "SPEED_OVER_SPEED_LIMIT",
+				"raise_delay" : 10000,
+
+				"reset_trigger" : "SPEED_BELOW_SPEED_LIMIT",
+				"reset_delay" : 10000,
+
+				"repeat_interval" : 0
+			}
+		}		
 	},
 
 	"transactions" : {
+
 		"DRIVE_START" : {
-			"label" : "Start driving",
 			"options" : {
 				"listen_to" : {
 					"event" : "DRIVE",
@@ -43,7 +68,6 @@
 		},
 
 		"DRIVE_STOP" : {
-			"label" : "Stop driving",
 			"options" : {
 				"listen_to" : {
 					"event" : "DRIVE",
@@ -51,14 +75,12 @@
 				},
 
 				"capture" : {
-					"system" : ["time", "speed", "odometer"],
-					"user" : ["reason", "location"]
+					"system" : ["time", "speed", "odometer"]
 				}
 			}
 		},
 
 		"DRIVE" : {
-			"label" : "Still driving",
 			"options" : {
 				"listen_to" : {
 					"event" : "DRIVE",
@@ -71,22 +93,73 @@
 			}	
 		},
 
-		"EXAMPLE_NO_EVENT" : {
-			"label" : "This won't be invoked automatically",
+		"LOAD_START" : {
 			"options" : {
+				"automatic" : false,
+				"listen_to" : {
+					"event" : "DRIVE",
+					"stage" : "RESET"
+				},				
 				"capture" : {
-					"system" : ["time", "odometer"]
+					"system" : ["time"]
 				}
 			}	
 		},
 
-		"EXAMPLE_NO_DATA" : {
-			"label" : "This won't capture any data",
+		"LOAD_END" : {
 			"options" : {
-					"listen_to" : {
-						"event" : "DRIVE",
-						"stage" : "REPEAT"
+				"automatic" : false,
+				"listen_to" : {
+					"event" : "DRIVE",
+					"stage" : "RESET"
+				},				
+				"capture" : {
+					"system" : ["time"],
+					"user" : ["waybill"]
 				}
+			}	
+		},
+
+		"SPEEDING_START" : {
+			"options" : {
+				"listen_to" : {
+					"event" : "SPEEDING",
+					"stage" : "RAISE"
+				},
+
+				"capture" : {
+					"system" : ["time", "speed"]
+				}
+			}	
+		},
+
+		"SPEEDING_STOP" : {
+			"options" : {
+				"listen_to" : {
+					"event" : "SPEEDING",
+					"stage" : "RESET"
+				},
+
+				"capture" : {
+					"system" : ["time", "speed"]
+				}
+			}	
+		}		
+	},
+
+	"activities" : {
+
+		"DRIVING" : {
+			"options" : {
+				"start_transact" : "DRIVE_START",
+				"end_transact" : "DRIVE_STOP"
+			}
+		},
+
+		"LOADING" : {
+			"options" : {
+				"start_transact" : "LOAD_START",
+				"end_transact" : "LOAD_END"
 			}
 		}
 	}

@@ -20,7 +20,7 @@ Value.prototype.addListener = function(listener) {
 	this.__listeners.push(listener);
 
 	if (this.__value_set)
-		listener.onValueChanged(this.__code, this.__value);
+		try {listener.onValueChanged(this.__code, this.__value);} catch(e){}
 }
 
 Value.prototype.removeListener = function(listener) {
@@ -42,7 +42,7 @@ Value.prototype.setValue = function(value) {
 	this.__value = value;
 
 	for(var key in this.__listeners)
-		this.__listeners[key].onValueChanged(this.__code, this.__value);
+		try {this.__listeners[key].onValueChanged(this.__code, this.__value);} catch(e){}
 }
 
 //#########################################################
