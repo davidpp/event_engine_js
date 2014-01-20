@@ -1,6 +1,27 @@
 event_engine_js
 ===============
 ##ExpEval
+A simple expression evaluator.
+<ul>
+<li>Supported operations are: || && == != <= < >= > + - * / % ^
+<li>The use of paranthesis are also supported
+<li>Variable names start with an under-score (e.g _thisIsAVariable)
+<li>Everything else is considered a constant
+<li>White spaces are allowed between symbols
+</ul>
+```
+var expression ="_a + 2 == _b && 3 - 2 ==   _c";
+var test_eval = new ExpEval(expression, {
+    onNeedValue : function(valueName) {
+      switch(valueName) {
+        case "a" : return 1;
+        case "b" : return 3;
+        case "c" : return 1;
+      }
+    }
+  });
+test_eval.evaluate(); // will return true
+```
 ##MessageTracker
 ##TriggerTracker
 ###Trigger Definition
