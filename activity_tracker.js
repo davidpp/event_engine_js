@@ -7,15 +7,27 @@ function ActivityInstance(activity) {
 	this.__activity = activity;
 
 	this.guid = uuid.v4();
+	this.ended = false;
+	this.started = false;
 }
 
 ActivityInstance.prototype.start = function(data) {
+
+	if (this.started)
+		return;
+
+	this.started = true;
 
 	this.start_data = data;
 	this.onStart(this.__activity);
 }
 
 ActivityInstance.prototype.end = function(data) {
+
+	if (this.ended)
+		return;
+
+	this.ended = true;
 
 	this.end_data = data;
 	this.onEnd(this.__activity);
@@ -119,8 +131,20 @@ Activity.prototype.onTransactionFinalized = function(code, data) {
 
 			var activity_instances = this.__activity_instances.slice();
 			for(var key in this.__listeners)
-				for(var key2 in activity_instances)
-					try {this.__listeners[key].onActivityPick(this.__code, activity_instances[key2], data);} catch(e) {}
+				for(var key2 in activity_instances) {
+
+					var activity_instance =  activity_instances[key2];
+					if (activity_instance.ended)
+						continue;
+					
+					try {
+
+						var complete = this.__listeners[key].onActivityPick(this.__code, activity_instance, data);
+						if (complete)
+							activity_instance.end(data);
+					}
+					catch(e) {}
+				}
 		}
 	}
 }
