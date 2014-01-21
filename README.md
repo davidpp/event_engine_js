@@ -175,18 +175,18 @@ Activities are stateful entities that have start and end operations that are tri
 <h3>Emits</h3>
 <b>onActivityStarted: </b> ```onActivityStarted(code, end_transact, activity_instance)```<br>
 When an activity starts<br>
- <b>code</b> the activity name<br>
- <b>end_transaction</b> the name of the transaction that will end this activity<br>
- <b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
+ <b>code: </b>the activity name<br>
+ <b>end_transaction: </b>the name of the transaction that will end this activity<br>
+ <b>activity_instance: </b>the activity instance that has a guid and holds the data that was captured<br>
 <b>onActivityEnded: </b> ```onActivityEnded(code, activity_instance)```<br>
 When activity ends<br>
- <b>code</b> the activity name<br>
- <b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
+ <b>code: </b>the activity name<br>
+ <b>activity_instance: </b>the activity instance that has a guid and holds the data that was captured<br>
 <b>onActivityPick: </b> ```onActivityPick(code, activity_instance, data)```<br>
-When there is multiple instances of an activity available when the end transaction is invoked. The listener of this message has to tell the system which activity is the one that needs to be ended<br>
-<b>code</b> the activity name<br>
-<b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
-<b>data</b>the data that was captured by the end transaction<br>
+When there is multiple instances of an activity available when the end transaction is invoked. The listener of this message has to tell the system which activity is the one that needs to be ended. The listener does this by returning true when the activity_instance is the one it wants to end<br>
+ <b>code: </b>the activity name<br>
+ <b>activity_instance: </b>the activity instance that has a guid and holds the data that was captured<br>
+ <b>data: </b>the data that was captured by the end transaction<br>
 
 <b>Example Activity Definition</b>
 ```

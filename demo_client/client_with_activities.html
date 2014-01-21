@@ -75,8 +75,10 @@
 			if (activity_instance == activity_instance_to_pick) {
 
 				writeMessage("ACTIVITY PICKED -> GUID: " + activity_instance.guid + "<br>", "activity_view");
-				activity_instance_to_pick.end(data);
+				return true;
 			}
+
+			return false;
 		}
 	};
 
