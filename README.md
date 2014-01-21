@@ -123,30 +123,48 @@ Events are entities that turn on and off based on the triggers they are listenin
 <b>reset_trigger: </b> trigger that will shitch this event off<br>
 <b>reset_delay: </b> reset_trigger has to stay on for this many milliseconds before this event switches off<br>
 <b>repeat_interval: </b> An additional message will be emited every repeat_interval milliseconds if this is greater than 0<br>
-##TransactionManager
-###Transact Definition
+
+<h2>TransactionManager</h2>
+
+Transactions capture information and emmit an onTransactionFinalized message when they are invoked.<br>
+A transaction can be invoked automatically buy binding it to an event or it can be invoked manually by calling the invoke method of the TransactionManager.<br>
+If the transaction is set to manual but still is bound to an event than the event is used to enable or disable the transaction
+
+<h3>Emits</h3>
+<b>onTransactionFinalized: </b> ```onTransactionFinalized(code, captured_data)```<br>
+Emitted when the transaction is invoked and all the data it needs to capture is captured.<br>
+<b>onTransactionEnabled: </b> ```onTransactionEnabled(code)```<br>
+Emitted when the bound event condition is satisfied if the transaction is manual.<br>
+<b>onTransactionDisabled: </b> ```onTransactionDisabled(code)```<br>
+Emitted when the bound event condition is not satisfied if the transaction is manual.<br>
+<b>onTransactionInputRequired: </b> ```onTransactionInputRequired(transaction_instance, list_of_required_values)```<br>
+Emitted when the transaction needs to capture additional data that can't be obtained from the ValueTracker (i.e. user inputs)<br>
+
+<b>Example Transact Definition</b>
 ```
 "DRIVE_START" : {
-  "label" : "Start driving",
-  "options" : {
-    "automatic" : true,
-    "listen_to" : {
-    "event" : "DRIVE",
-    "stage" : "RAISE"
-  },
-  "capture" : {
-    "system" : ["speed", "odometer"]
-    "user" : [
-      {
-        "variable" : "user_name",
-        "label" : "Tell me your name"
-      },
-      {
-        "variable" : "password",
-        "label" : "Give me your password also please"
-      }
-    ]    
-  }
-}	
+    "options" : {
+        "automatic" : true,
+        
+        "listen_to" : {
+            "event" : "DRIVE",
+            "stage" : "RAISE"
+        },
+        
+        "capture" : {
+            "system" : ["speed", "odometer"],
+            "user" : ["user_name", "password"]
+        }
+    }
 }
 ```
+
+<b>DRIVE_START: </b>Name of the transaction<br>
+<b>options: </b>Contains the configuration options for the transaction<br>
+<b>automatic: </b>Declares the transaction as eigther automatic or manual<br>
+<b>listen_to: </b>The event binding options<br>
+<b>event: </b>Name of the event to invoke this transaction (or enable it if the transaction is manual)<br>
+<b>stage: </b>Stage (raise, reset, repeat) of the event to invoke this transaction (or enable it if the transaction is manual. only raise and reset are relevant for manual events)<br>
+<b>capture: </b>Data capture configuration<br>
+<b>system: </b>Data to be captured from the system (a.k.a. ValueTracker)<br>
+<b>user: </b>Data to be captured from the user<br>
