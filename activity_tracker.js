@@ -48,7 +48,7 @@ Activity.prototype.addListener = function(listener) {
 	this.__listeners.push(listener);
 
 	for (var key in this.__activity_instances)
-		listener.onActivityStarted(this.__activity_instances[key]);
+		try {listener.onActivityStarted(this.__code, this.__end_transact, this.__activity_instances[key]);} catch(e) {}
 }
 
 Activity.prototype.removeListener = function(listener) {
