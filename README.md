@@ -94,8 +94,15 @@ Triggers are a entities that turn on and off based on the conditions that are de
 <b>options: </b>Contains the configuration options for this trigger.<br>
 <b>conditions: </b>This expression defines the condition that turns this trigger "ON". When these conditions are not met the trigger will be "OFF". When the trigger switches from "ON->OFF" it sends an "onTriggerRelease" event. When the trigger switches from "OFF->ON" it sends an "onTriggerFire" event.<br>
 
-##EventTracker
-###Event Definition
+<h2>EventTracker</h2>
+Events are entities that turn on and off based on the triggers they are listening to and the time constraints that they are setup with. An event switches on when it's raise_trigger switches on and stays that way for raise_delay milliseconds. It switches off when it's reset_trigger switches on and stays that way for resey_delay milliseconds. Event will emit an "onEventRaised" message when it switches on, it will emit an "onEventReset" when it switches off. If the "repeat_interval" is greater than 0 then based on its value, an additional "onEventRepeat" message will be emitted periodically. 
+
+<h3>Emits</h3>
+<b>onEventReseted: </b> ```onEventReseted(code)```<br>
+<b>onEventRaised: </b> ```onEventRaised(code)```<br>
+<b>onEventRepeated: </b> ```onEventRepeated(code)```<br>
+
+<b>Example Event Definition</b>
 ```
 "DRIVE" : {
   "options" : {
@@ -109,6 +116,13 @@ Triggers are a entities that turn on and off based on the conditions that are de
   }
 }
 ```
+<b>DRIVE: </b>Name of the event. This will be used to refer to this event.<br>
+<b>options: </b>Contains the configuration options<br>
+<b>raise_trigger: </b> trigger that will shitch this event on<br>
+<b>raise_delay: </b> raise_trigger has to stay on for this many milliseconds before this event switches on<br>
+<b>reset_trigger: </b> trigger that will shitch this event off<br>
+<b>reset_delay: </b> reset_trigger has to stay on for this many milliseconds before this event switches off<br>
+<b>repeat_interval: </b> An additional message will be emited every repeat_interval milliseconds if this is greater than 0<br>
 ##TransactionManager
 ###Transact Definition
 ```
