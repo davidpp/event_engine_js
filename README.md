@@ -1,5 +1,5 @@
-event_engine_js
-===============
+<h1>event_engine_js</h1>
+
 <h2>ExpEval</h2>
 A simple expression evaluator.
 <ul>
@@ -168,3 +168,36 @@ Emitted when the transaction needs to capture additional data that can't be obta
 <b>capture: </b>Data capture configuration<br>
 <b>system: </b>Data to be captured from the system (a.k.a. ValueTracker)<br>
 <b>user: </b>Data to be captured from the user<br>
+
+<h2>ActivityTracker</h2>
+Activities are stateful entities that have start and end operations that are triggered automatically by binding them to transactions. There can be multiple activities going on at the same time. these can be different activities or multiple instances of the same activity.
+
+<h3>Emits</h3>
+<b>onActivityStarted: </b> ```onActivityStarted(code, end_transact, activity_instance)```<br>
+When an activity starts<br>
+ <b>code</b> the activity name<br>
+ <b>end_transaction</b> the name of the transaction that will end this activity<br>
+ <b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
+<b>onActivityEnded: </b> ```onActivityEnded(code, activity_instance)```<br>
+When activity ends<br>
+ <b>code</b> the activity name<br>
+ <b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
+<b>onActivityPick: </b> ```onActivityPick(code, activity_instance, data)```<br>
+When there is multiple instances of an activity available when the end transaction is invoked. The listener of this message has to tell the system which activity is the one that needs to be ended<br>
+<b>code</b> the activity name<br>
+<b>activity_instance</b>the activity instance that has a guid and holds the data that was captured<br>
+<b>data</b>the data that was captured by the end transaction<br>
+
+<b>Example Activity Definition</b>
+```
+"LOADING" : {
+    "options" : {
+        "start_transact" : "LOAD_START",
+        "end_transact" : "LOAD_END"
+    }
+}
+```
+<b>LOADING: </b>Name of this activity<br>
+<b>options: </b>Contains the configuration options<br>
+<b>start_transact: </b>The transaction that'll cause this activity to start<br>
+<b>end_transact: </b>The transaction that'll cause this activity to end<br>
