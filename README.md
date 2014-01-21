@@ -1,13 +1,13 @@
 event_engine_js
 ===============
-##ExpEval
+<h2>ExpEval</h2>
 A simple expression evaluator.
 <ul>
-<li>Supported operations are: || && == != <= < >= > + - * / % ^
-<li>The use of paranthesis are also supported
-<li>Variable names start with an under-score (e.g _thisIsAVariable)
-<li>Everything else is considered a constant
-<li>White spaces are allowed between symbols
+    <li>Supported operations are: || && == != <= < >= > + - * / % ^
+    <li>The use of paranthesis are also supported
+    <li>Variable names start with an under-score (e.g _thisIsAVariable)
+    <li>Everything else is considered a constant
+    <li>White spaces are allowed between symbols
 </ul>
 ```
 var expression ="_a + 2 == _b && 3 - 2 ==   _c";
@@ -22,8 +22,46 @@ var test_eval = new ExpEval(expression, {
   });
 test_eval.evaluate(); // will return true
 ```
-##MessageTracker
-##TriggerTracker
+<h2>MessageTracker</h2>
+Emitter / Listener based message bus.
+
+An emiter registers itself to the bus by calling the setEmitter method with a specific code (message identifier) that it emits.
+
+A listener registers for a specific code by calling the addListener method, and it can stop listening for that message by calling the removeListener method.
+
+When a listener registers for a message, the MessageTracker finds the emitter for that message and calls it's addListener method with the arguments the actual listener passed in. So it acts as the middle man for the addListener calls not the actual messages.
+
+Emitters have to implement the following functions:
+```
+function addListener(listener, options)
+function removeListener(listener, options)
+```
+
+Listeners have to implement the specific callback functions that are defined by the emitter of the message they subscribe to.
+
+```
+var message_tracker = new MessageTracker();
+message_tracker.setEmitter("my_message", {
+    addListener : function(listener, options) {
+        add listener to the local listeners list
+    }
+
+    removeListener : function(listener, options) {
+        remove listener from the local listeners list
+    }
+});
+
+//-----------------
+
+message_tracker.addListener("my_message", {
+    // message received, do something with it...
+});
+```
+
+<h2>ValueTracker</h2>
+Keeps track of the values that are given to it and calls the subscribed listeners when a value changes.
+
+<h2>TriggerTracker</h2>
 ###Trigger Definition
 ```
 "SPEED_OVER_DRIVE_LIMIT" : {
