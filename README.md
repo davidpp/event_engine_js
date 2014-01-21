@@ -39,40 +39,61 @@ function removeListener(listener, options)
 
 Listeners have to implement the specific callback functions that are defined by the emitter of the message they subscribe to.
 
+<b>Example</b>
 ```
+//Create a message tracker
 var message_tracker = new MessageTracker();
+
+//Set the emitter for the message "my_message"
 message_tracker.setEmitter("my_message", {
+    
     addListener : function(listener, options) {
         add listener to the local listeners list
-    }
+    },
 
     removeListener : function(listener, options) {
         remove listener from the local listeners list
+    },
+    
+    someFunctionToCallTheEvent : function() {
+        for(var key in this.__listeners)
+            this.__listeners[key].onMyMessage("what's up?");
     }
 });
 
-//-----------------
-
+//Add a listener for the "my_message" message
 message_tracker.addListener("my_message", {
-    // message received, do something with it...
+    onMyMessage : function(some_var) {
+        // message received, do something with it...
+    }
 });
 ```
 
 <h2>ValueTracker</h2>
 Keeps track of the values that are given to it and calls the subscribed listeners when a value changes.
 
+<h3>Emits</h3>
+<b>onValueChanged: <b> ```onValueChanged(code, value)```
+
 <h2>TriggerTracker</h2>
-###Trigger Definition
+Triggers are a entities that turn on and off based on the conditions that are defined for them. When their state changes, they emit messages.
+
+<h3>Emits</h3>
+<b>onTriggerFired: </b> ```onTriggerFired(code)```<br>
+<b>onTriggerReleased: </b> ```onTriggerReleased(code)```
+
+<b>Example Trigger Definition</b>
 ```
 "SPEED_OVER_DRIVE_LIMIT" : {
-  "options" : {
-    "conditions":"_speed>30"
-  }
+    "options" : {
+        "conditions" : "_speed>30"
+    }
 }
 ```
-**SPEED_OVER_DRIVE_LIMIT:** This is the name of the trigger. Other entities that'll use this trigger will reference it by this name.
-**options:** Contains the configuration options for this trigger.
-**conditions:** This expression defines the condition that turns this trigger "ON". When these conditions are not met the trigger will be "OFF". When the trigger switches from "ON->OFF" it sends an "onTriggerRelease" event. When the trigger switches from "OFF->ON" it sends an "onTriggerFire" event.
+<b>SPEED_OVER_DRIVE_LIMIT: </b>This is the name of the trigger. Other entities that'll use this trigger will reference it by this name.<br>
+<b>options: </b>Contains the configuration options for this trigger.<br>
+<b>conditions: </b>This expression defines the condition that turns this trigger "ON". When these conditions are not met the trigger will be "OFF". When the trigger switches from "ON->OFF" it sends an "onTriggerRelease" event. When the trigger switches from "OFF->ON" it sends an "onTriggerFire" event.<br>
+
 ##EventTracker
 ###Event Definition
 ```
