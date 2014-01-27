@@ -34,6 +34,7 @@
 
 			writeMessage("TRANSACTION -> " + code + ", " + JSON.stringify(data) + "<br>", "transaction_view");
 
+
 			$.post("http://127.0.0.1:8080", JSON.stringify({type:"TRANSACTION", "code":code, "data":data}), "json");
 		},
 
@@ -188,7 +189,7 @@
 
 	window.onload = function() {
 
-		var available_system_values = [ "speed", "odometer", "user_id", "truck_id" ];
+		var available_system_values = [ "speed", "odometer", "lat", "lon" ];
 		showSystemInputs(available_system_values);
 
 		loadConfiguration();
