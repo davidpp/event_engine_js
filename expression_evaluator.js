@@ -13,7 +13,7 @@ var exp_eval_constants = {
 }
 
 function ExpEvalOptions() {
-	
+
 	this.SYMBOL_PATTERN = "";
 
 	this.SEGMENT_START_CHAR = "(";
@@ -24,8 +24,8 @@ function ExpEvalOptions() {
 
 	this.VARIABLE_PREFIX = "_";
 	this.VARIABLE_REGEX = "_\\w+";
-	
-	this.CONSTANT_REGEX = "-?\\d+\\.\\d+|-?\d+|\\w+";
+
+	this.CONSTANT_REGEX = "-?\\d+\\.\\d+|-?\\d+|\\w+";
 
 	this.OPERATORS = {
 
@@ -140,14 +140,6 @@ function ExpEvalOptions() {
 				return Math.pow(parseFloat(o1) , parseFloat(o2));
 			}
 		},
-
-		"ej" : {
-			precedence : 8,
-			regex_symbol : 'ej',
-			perform : function(o1,o2) {
-				return parseFloat(o1) * 6 + parseFloat(o2);
-			}			
-		}
 	};
 
 	this.__buildSymbolPattern();
@@ -243,7 +235,7 @@ ExpEval.prototype.__fillVariableList = function()
 	for(var key in this.__symbol_list)
 	{
 		var symbol = this.__symbol_list[key];
-		
+
 		var symbol_type = this.__getSymbolType(symbol);
 		if (symbol_type == exp_eval_constants.OPERAND)
 		{
@@ -329,7 +321,7 @@ ExpEval.prototype.evaluate = function ()
 
 						var result = this.__operateOn(operand1, operand2, top_operator);
 						operandList.push(result);
-					}							
+					}
 				} while (top_operator != this.__options.SEGMENT_START_CHAR && operatorList.length > 0)
 				break;
 
