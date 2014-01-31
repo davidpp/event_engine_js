@@ -23,6 +23,18 @@
 			"options" : {
 				"conditions":"_speed<110"
 			}
+		},
+
+		"INSIDE_KAMLOOPS" : {
+			"options" : {
+				"conditions" : "((_lat - 50.6761)^2 + (_lon + 120.3408)^2)^0.5*100000<=500"
+			}
+		},
+
+		"OUTSIDE_KAMLOOPS" : {
+			"options" : {
+				"conditions" : "((_lat - 50.6761)^2 + (_lon + 120.3408)^2)^0.5*100000>500"
+			}
 		}
 	},
 
@@ -49,7 +61,19 @@
 
 				"repeat_interval" : 0
 			}
-		}		
+		},
+
+		"KAMLOOPS" : {
+			"options" : {
+				"raise_trigger" : "INSIDE_KAMLOOPS",
+				"raise_delay" : 10000,
+
+				"reset_trigger" : "OUTSIDE_KAMLOOPS",
+				"reset_delay" : 10000,
+
+				"repeat_interval" : 0
+			}
+		}
 	},
 
 	"transactions" : {
@@ -144,7 +168,33 @@
 					"system" : ["time", "speed"]
 				}
 			}	
-		}		
+		},
+
+		"ENTER_KAMLOOPS" : {
+			"options" : {
+				"listen_to" : {
+					"event" : "KAMLOOPS",
+					"stage" : "RAISE"
+				},
+
+				"capture" : {
+					"system" : ["time", "lat", "lon", "speed"]
+				}
+			}	
+		},
+
+		"LEAVE_KAMLOOPS" : {
+			"options" : {
+				"listen_to" : {
+					"event" : "KAMLOOPS",
+					"stage" : "RESET"
+				},
+
+				"capture" : {
+					"system" : ["time", "lat", "lon", "speed"]
+				}
+			}	
+		}
 	},
 
 	"activities" : {
@@ -159,7 +209,8 @@
 		"LOADING" : {
 			"options" : {
 				"start_transact" : "LOAD_START",
-				"end_transact" : "LOAD_END"
+				"end_transact" : "LOAD_END",
+				"unique" : true
 			}
 		}
 	}

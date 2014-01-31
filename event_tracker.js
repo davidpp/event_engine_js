@@ -42,11 +42,11 @@ Event.prototype.removeListener = function(listener) {
 
 Event.prototype.setOptions = function(options)
 {
-	this.__options.raise_delay = options.raise_delay;
-	this.__options.reset_delay = options.reset_delay;
-	this.__options.repeat_interval = options.repeat_interval;
+	this.__options.raise_delay = options.raiseDelay;
+	this.__options.reset_delay = options.resetDelay;
+	this.__options.repeat_interval = options.repeatInterval;
 
-	if ( this.__options.raise_trigger != options.raise_trigger )
+	if ( this.__options.raise_trigger != options.raiseTrigger )
 	{
 		if (this.__raise_timeout != null)
 			window.clearTimeout(this.__raise_timeout);
@@ -55,20 +55,20 @@ Event.prototype.setOptions = function(options)
 			window.clearInterval(this.__repeat_interval);
 
 		this.__raise_timeout = null;
-		this.__repeat_interval = null;		
+		this.__repeat_interval = null;
 
 		this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.raise_trigger});
 		this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
 
-		this.__options.raise_trigger = options.raise_trigger;
+		this.__options.raise_trigger = options.raiseTrigger;
 		this.__raised_once = false;
 		this.__raised = false;
-		
+
 		this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.raise_trigger});
 		this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.raise_trigger});
 	}
 
-	if (this.__options.reset_trigger != options.reset_trigger)
+	if (this.__options.reset_trigger != options.resetTrigger)
 	{
 		if (this.__reset_timeout != null)
 			window.clearTimeout(this.__reset_timeout);
@@ -78,7 +78,7 @@ Event.prototype.setOptions = function(options)
 		this.__message_tracker.removeListener("onTriggerFired", this, {code:this.__options.reset_trigger});
 		this.__message_tracker.removeListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
 
-		this.__options.reset_trigger = options.reset_trigger;
+		this.__options.reset_trigger = options.resetTrigger;
 
 		this.__message_tracker.addListener("onTriggerFired", this, {code:this.__options.reset_trigger});
 		this.__message_tracker.addListener("onTriggerReleased", this, {code:this.__options.reset_trigger});
@@ -103,7 +103,7 @@ function __onEventRaiseTriggerFire(event) {
 
 		if ( event.__repeat_interval != null)
 			window.clearInterval(this.__repeat_interval);
-		
+
 		event.__repeat_interval = window.setInterval(__onEventRepeatTriggerFire, event.__options.repeat_interval, event);
 	}
 
@@ -128,7 +128,7 @@ function __onEventResetTriggerFire(event) {
 
 Event.prototype.onTriggerFired = function(code)
 {
-	if (code == this.__options.raise_trigger && this.__raised == false) {		
+	if (code == this.__options.raise_trigger && this.__raised == false) {
 
 		if (this.__raise_timeout != null)
 			window.clearTimeout(this.__raise_timeout);
@@ -193,7 +193,7 @@ EventTracker.prototype.addEvent = function (code, options)
 }
 
 EventTracker.prototype.addListener = function(listener, options) {
-	
+
 	var evnt = this.__getEvent(options.code);
 
 	evnt.addListener(listener);
