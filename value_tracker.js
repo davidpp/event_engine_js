@@ -3,7 +3,7 @@
 //#########################################################
 
 function Value(code) {
-	
+
 	this.__code = code;
 	this.__value = null;
 	this.__value_set = false;
@@ -63,7 +63,7 @@ ValueTracker.prototype.__getValue = function(code)
 
 	return this.__values[code];
 }
-	
+
 ValueTracker.prototype.newValue = function(code, value)
 {
 	var val = this.__getValue(code);
@@ -72,7 +72,7 @@ ValueTracker.prototype.newValue = function(code, value)
 }
 
 ValueTracker.prototype.addListener = function(listener, options) {
-	
+
 	var val = this.__getValue(options.code);
 
 	val.addListener(listener);

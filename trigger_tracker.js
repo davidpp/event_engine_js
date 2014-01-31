@@ -39,7 +39,7 @@ Trigger.prototype.removeListener = function(listener) {
 
 Trigger.prototype.__callListener = function(listener) {
 
-	if (this.__conditions_met) 
+	if (this.__conditions_met)
 		try {listener.onTriggerFired(this.__code);} catch(e){}
 
 	else if (this.__conditions_met_once)
@@ -54,7 +54,7 @@ Trigger.prototype.__callListeners = function() {
 
 Trigger.prototype.onNeedValue = function(name)
 {
-	return this.__current_values[name];	
+	return this.__current_values[name];
 }
 
 Trigger.prototype.onValueChanged = function(code, value) {
@@ -71,7 +71,7 @@ Trigger.prototype.onValueChanged = function(code, value) {
 			this.__conditions_met_once = true;
 
 		this.__callListeners();
-	}	
+	}
 }
 
 Trigger.prototype.setOptions = function(options)
@@ -79,6 +79,7 @@ Trigger.prototype.setOptions = function(options)
 	if( this.__conditions != options.conditions )
 	{
 		this.__conditions = options.conditions;
+
 		this.__conditions_met = false;
 		this.__conditions_met_once = false;
 		this.__current_values = new Array();
@@ -100,7 +101,7 @@ Trigger.prototype.setOptions = function(options)
 //#########################################################
 
 function TriggerTracker(message_tracker) {
-	
+
 	this.__triggers = new Array();
 	this.__message_tracker = message_tracker;
 
@@ -124,7 +125,7 @@ TriggerTracker.prototype.addTrigger = function(code, options) {
 }
 
 TriggerTracker.prototype.addListener = function(listener, options) {
-	
+
 	var trigger = this.__getTrigger(options.code);
 
 	trigger.addListener(listener);

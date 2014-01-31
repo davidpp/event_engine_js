@@ -11,7 +11,7 @@ function Message(code) {
 }
 
 Message.prototype.setEmitter = function(emitter) {
-	
+
 	if (this.__emitter == emitter)
 		return;
 
