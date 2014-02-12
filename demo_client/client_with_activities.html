@@ -16,7 +16,7 @@
     <script>
 
     var nav2_server = "http://127.0.0.1:8080/api"
-    var auth_token = "ByYyj7T4BMMLGquiZn9WLPk1Y0OIZKVy"
+    var auth_token = "CrdcpgTER01YCtr59dSGdR0t4DrXSS9d"
 
     var message_tracker = new MessageTracker();
     var value_tracker = new ValueTracker(message_tracker);
@@ -36,7 +36,7 @@
         onActivityEventFinalized : function(event_instance) {
 
             var activity_event_payload = {};
-            activity_event_payload.code = event_instance.code;
+            activity_event_payload.config = event_instance.code;
             activity_event_payload.eventTime = event_instance.eventTime;
             for(var key in event_instance.captured_data)
                 activity_event_payload[key] = event_instance.captured_data[key];
@@ -72,9 +72,11 @@
 
             activity_instance.activity_view = activity_view;
 
+            writeMessage("ACTIVITY STARTED -> " + payload_json + "<br>", "activity_view");
+
+/*
             var activity_payload = {};
-            activity_payload.code = code;
-            activity_payload.guid = activity_instance.guid;
+            activity_payload.config = code;
             activity_payload.startTime = activity_instance.startTime;
 
             for (var key in activity_instance.start_data)
@@ -96,6 +98,7 @@
                     this.activityInstance._key = data._key;
                 }
             });
+*/
         },
 
         onActivityEnded : function(code, activity_instance) {
@@ -103,8 +106,7 @@
             activity_instance.activity_view.parentNode.removeChild(activity_instance.activity_view);
 
             var activity_payload = {};
-            activity_payload.code = code;
-            activity_payload.guid = activity_instance.guid;
+            activity_payload.config = code;
             activity_payload.startTime = activity_instance.startTime;
             activity_payload.endTime = activity_instance.endTime;
 
@@ -119,8 +121,8 @@
             writeMessage("ACTIVITY ENDED -> " + payload_json + "<br>", "activity_view");
 
             $.ajax({
-                url: nav2_server + "/activityTracker/activities/" + activity_instance._key,
-                type: "PUT",
+                url: nav2_server + "/activityTracker/activities",
+                type: "POST",
                 contentType: "application/json",
                 data: payload_json,
                 beforeSend: function(xhr){ xhr.setRequestHeader("Authorization", "Bearer " + auth_token); },
@@ -153,7 +155,7 @@
             success: function(data){
                 for(var key in data) {
                     var trigger_config = data[key];
-                    trigger_tracker.addTrigger(trigger_config.code, trigger_config.options);
+                    trigger_tracker.addTrigger(trigger_config._key, trigger_config);
                 }
             }
         });
@@ -165,7 +167,7 @@
             success: function(data){
                 for(var key in data) {
                     var event_config = data[key]
-                    event_tracker.addEvent(event_config.code, event_config.options);
+                    event_tracker.addEvent(event_config._key, event_config);
                 }
             }
         });
@@ -179,12 +181,12 @@
 
                     var activity_event_config = data[key];
 
-                    transaction_tracker.addActivityEvent(activity_event_config.code, activity_event_config.options);
+                    transaction_tracker.addActivityEvent(activity_event_config._key, activity_event_config);
 
-                    message_tracker.addListener("onActivityEventFinalized", transaction_listener, {code:activity_event_config.code});
-                    message_tracker.addListener("onActivityEventEnabled", transaction_listener, {code:activity_event_config.code});
-                    message_tracker.addListener("onActivityEventDisabled", transaction_listener, {code:activity_event_config.code});
-                    message_tracker.addListener("onActivityEventInputRequired", transaction_listener, {code:activity_event_config.code});
+                    message_tracker.addListener("onActivityEventFinalized", transaction_listener, {code:activity_event_config._key});
+                    message_tracker.addListener("onActivityEventEnabled", transaction_listener, {code:activity_event_config._key});
+                    message_tracker.addListener("onActivityEventDisabled", transaction_listener, {code:activity_event_config._key});
+                    message_tracker.addListener("onActivityEventInputRequired", transaction_listener, {code:activity_event_config._key});
                 }
             }
         });
@@ -200,10 +202,10 @@
 
                     var activity_config = data[key];
 
-                    activity_tracker.addActivity(activity_config.code, activity_config.options);
+                    activity_tracker.addActivity(activity_config._key, activity_config);
 
-                    message_tracker.addListener("onActivityStarted", activity_listener, {code:activity_config.code});
-                    message_tracker.addListener("onActivityEnded", activity_listener, {code:activity_config.code});
+                    message_tracker.addListener("onActivityStarted", activity_listener, {code:activity_config._key});
+                    message_tracker.addListener("onActivityEnded", activity_listener, {code:activity_config._key});
                 }
             }
         });
@@ -263,7 +265,7 @@
         activity_list_view.innerHTML = "";
 
         for( var key in activities) {
-            var activity_view = createActivityView(activities[key].code, activities[key].options.startEvent);
+            var activity_view = createActivityView(activities[key]._key, activities[key].startEvent);
             activity_list_view.appendChild(activity_view);
         }
     }
