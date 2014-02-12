@@ -6,7 +6,6 @@ function ActivityInstance(activity) {
 
 	this.__activity = activity;
 
-	this.guid = uuid.v4();
 	this.ended = false;
 	this.started = false;
 }

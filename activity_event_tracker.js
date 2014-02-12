@@ -34,6 +34,11 @@ var activity_event_constants = {
 	RESET : "RESET"
 };
 
+var activity_capture_constants = {
+	SYSTEM : "SYSTEM",
+	USER : "USER"
+};
+
 function ActivityEvent(code, message_tracker) {
 
 	this.__code = code;
@@ -131,12 +136,12 @@ ActivityEvent.prototype.setOptions = function (options) {
 
 			switch(capture_config.source)
 			{
-				case "system":
+				case activity_capture_constants.SYSTEM:
 					this.__options.capture.system.push(capture_config.name);
 					this.__message_tracker.addListener("onValueChanged", this, {code:capture_config.name});
 					break;
 
-				case "user":
+				case activity_capture_constants.USER:
 					this.__options.capture.user.push(capture_config.name);
 					break;
 			}
